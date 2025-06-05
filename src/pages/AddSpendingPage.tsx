@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { TextField, Button, Box, Typography } from "@mui/material";
+import { TextField, Button } from "@mui/material"; // Box removed
+import styles from "./AddSpendingPage.module.css"; // Import the CSS module
 
 const AddSpendingPage = () => {
   const [date, setDate] = useState("");
@@ -9,7 +10,6 @@ const AddSpendingPage = () => {
   const [additionalInfo, setAdditionalInfo] = useState("");
 
   const handleSubmit = () => {
-    // Handle the form submission logic here
     console.log({
       date,
       merchantName,
@@ -17,60 +17,57 @@ const AddSpendingPage = () => {
       amount,
       additionalInfo,
     });
-    // You would typically send this data to a backend or state management store
+    // TODO: upload this data to a backend or state management store
   };
 
   return (
-    <Box
-      component="form"
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 2, // Spacing between elements
-        maxWidth: "500px", // Max width of the form
-        margin: "auto", // Center the form
-        padding: 2, // Padding around the form
-      }}
-      noValidate
-      autoComplete="off"
-    >
-      <Typography variant="h5" component="h2" gutterBottom>
-        Add Spending
-      </Typography>
-      <TextField
-        label="Date"
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        InputLabelProps={{ shrink: true }}
-      />
-      <TextField
-        label="Merchant Name"
-        value={merchantName}
-        onChange={(e) => setMerchantName(e.target.value)}
-      />
-      <TextField
-        label="Category"
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-      />
-      <TextField
-        label="Amount"
-        type="number"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-      />
-      <TextField
-        label="Additional Info (Optional)"
-        multiline
-        rows={3}
-        value={additionalInfo}
-        onChange={(e) => setAdditionalInfo(e.target.value)}
-      />
-      <Button variant="contained" onClick={handleSubmit} sx={{ mt: 2 }}>
-        Submit
-      </Button>
-    </Box>
+    <>
+      <h2>Add New Spending</h2>
+      <div className={styles.FormContainer}>
+        <TextField
+          label="Date"
+          fullWidth // Makes TextField take the full width of its container
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
+        <TextField
+          label="Merchant Name"
+          fullWidth
+          value={merchantName}
+          onChange={(e) => setMerchantName(e.target.value)}
+        />
+        <TextField
+          label="Category"
+          fullWidth
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        />
+        <TextField
+          label="Amount"
+          fullWidth
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+        <TextField
+          label="Additional Info (Optional)"
+          fullWidth
+          multiline
+          rows={3}
+          value={additionalInfo}
+          onChange={(e) => setAdditionalInfo(e.target.value)}
+        />
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          className={styles.submitButton} // Using class from CSS module
+        >
+          Submit
+        </Button>
+      </div>
+    </>
   );
 };
 export default AddSpendingPage;

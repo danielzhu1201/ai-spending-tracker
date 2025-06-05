@@ -1,0 +1,12 @@
+.FormContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Corresponds to MUI theme.spacing(2) */
+  width: 100%;
+  min-width: 300px;
+  padding: 24px;
+}
+
+.submitButton {
+  margin-top: 16px; /* Corresponds to MUI theme.spacing(2) */
+}
