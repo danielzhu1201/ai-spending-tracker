@@ -1,0 +1,19 @@
+.TransactionDetailContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 300px;
+  min-height: 72px;
+}
+
+.LeftContainer {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.TextContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
