@@ -1,0 +1,10 @@
+.FilterContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.DropdownContainer {
+  display: flex;
+  gap: 8px;
+}
