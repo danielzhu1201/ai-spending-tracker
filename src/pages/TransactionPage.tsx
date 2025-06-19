@@ -15,6 +15,8 @@ import {
   type SelectChangeEvent,
 } from "@mui/material";
 import TransactionDetail from "../atoms/TransactionDetail";
+import { type User, onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase";
 import styles from "./TransactionPage.module.css";
 
 // --- Define a type for our transaction data ---
@@ -80,11 +82,26 @@ const mockData: Transaction[] = [
 ];
 
 const TransactionPage = () => {
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        if (currentUser) {
+          console.log("User is logged in on TransactionPage:", currentUser.uid);
+          setLoading(false);
+        } else {
+          console.log("No user logged in on TransactionPage.");
+        }
+      });
+      return () => unsubscribe();
+    }, []);
 
   useEffect(() => {
     // Simulate fetching data
@@ -122,6 +139,10 @@ const TransactionPage = () => {
       return matchesSearchTerm && matchesDate && matchesCategory;
     });
   }, [transactions, searchTerm, selectedDate, selectedCategory]);
+
+  if (loading) {
+      return <p>Please login to view this page</p>;
+  }
 
   return (
     <>

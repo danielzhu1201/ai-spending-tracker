@@ -8,6 +8,8 @@ import {
 } from "@mui/material";
 import Webcam from "react-webcam";
 import styles from "./AddSpendingPage.module.css"; // Import the CSS module
+import { type User, onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase";
 
 const AddSpendingPage = () => {
   const [date, setDate] = useState("");
@@ -16,6 +18,8 @@ const AddSpendingPage = () => {
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Webcam related state
   const videoConstraints = {
@@ -90,6 +94,24 @@ const AddSpendingPage = () => {
       setUploadMode(newMode);
     }
   };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        console.log("User is logged in on AddSpendingPage:", currentUser.uid);
+        console.log(currentUser);
+        setLoading(false);
+      } else {
+        console.log("No user logged in on AddSpendingPage.");
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <p>Please login to view this page</p>;
+  }
 
   return (
     <>
