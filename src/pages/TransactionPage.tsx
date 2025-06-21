@@ -5,6 +5,7 @@ import LocalPizzaIcon from "@mui/icons-material/LocalPizza";
 import DirectionsTransitIcon from "@mui/icons-material/DirectionsTransit"; // Or TrainIcon
 import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber"; // Replacement for TicketIcon
 import CheckroomIcon from "@mui/icons-material/Checkroom"; // Replacement for ShirtIcon
+
 import {
   TextField,
   Select,
@@ -14,6 +15,7 @@ import {
   Box,
   type SelectChangeEvent,
 } from "@mui/material";
+
 import TransactionDetail from "../atoms/TransactionDetail";
 import { type User, onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
@@ -29,8 +31,9 @@ interface Transaction {
   date: string;
 }
 
-// --- Mock Data ---
+
 const mockData: Transaction[] = [
+
   {
     id: 1,
     icon: <CoffeeIconMUI />,
@@ -82,6 +85,7 @@ const mockData: Transaction[] = [
 ];
 
 const TransactionPage = () => {
+  
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -146,6 +150,8 @@ const TransactionPage = () => {
 
   return (
     <>
+      <h2>Total Spending: ${totalAmount.toFixed(2)}</h2>
+
       <h2>Transactions</h2>
 
       <div className={styles.FilterContainer}>
@@ -221,4 +227,5 @@ const TransactionPage = () => {
     </>
   );
 };
+
 export default TransactionPage;
