@@ -8,18 +8,18 @@ import {
 } from "@mui/material";
 import Webcam from "react-webcam";
 import styles from "./AddSpendingPage.module.css"; // Import the CSS module
-import { type User, onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
+import { addTransaction, receiptScan } from "../api/api";
 
 const AddSpendingPage = () => {
   const [date, setDate] = useState("");
   const [merchantName, setMerchantName] = useState("");
   const [uploadMode, setUploadMode] = useState<"manual" | "camera">("manual"); // State for upload mode
   const [category, setCategory] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(0.0);
   const [additionalInfo, setAdditionalInfo] = useState("");
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authenticated, setIsAuthenticated] = useState(false);
 
   // Webcam related state
   const videoConstraints = {
@@ -34,14 +34,25 @@ const AddSpendingPage = () => {
   const handleSubmit = () => {
     if (uploadMode === "camera") {
       if (capturedImage) {
-        // Populate fields with placeholder values
-        // In a real scenario, these might come from OCR/AI processing of the image
-        setDate(new Date().toISOString().split("T")[0]); // Set to today's date
-        setMerchantName("Scanned Merchant (Edit)");
-        setCategory("Scanned Category (Edit)");
-        setAmount("0.00"); // Default amount, user should verify
-        setAdditionalInfo("Details from scanned receipt (Edit if needed).");
+        receiptScan(capturedImage.replace("data:image/jpeg;base64,", "")).then(
+          (response) => {
+            console.log("Receipt scan response:", response);
+            const responseString = response.response;
+            const jsonStartIndex = responseString.indexOf("{");
+            const jsonEndIndex = responseString.lastIndexOf("}");
+            const jsonString = responseString.substring(
+              jsonStartIndex,
+              jsonEndIndex + 1
+            );
+            const parsedObject = JSON.parse(jsonString);
 
+            setDate(parsedObject.date);
+            setMerchantName(parsedObject.merchantName);
+            setCategory(parsedObject.category);
+            setAmount(parsedObject.amount);
+            setAdditionalInfo("Details from scanned receipt (Edit if needed).");
+          }
+        );
         // Switch to manual mode for user review and final submission
         setUploadMode("manual");
         // The capturedImage remains in state and will be submitted with the manual form.
@@ -53,6 +64,8 @@ const AddSpendingPage = () => {
       }
     } else if (uploadMode === "manual") {
       // This is the final submission (either purely manual or after camera pre-fill)
+
+      addTransaction(date, merchantName, category, amount);
       console.log("Submitting form data:", {
         date,
         merchantName,
@@ -70,7 +83,7 @@ const AddSpendingPage = () => {
       setDate("");
       setMerchantName("");
       setCategory("");
-      setAmount("");
+      setAmount(0.0);
       setAdditionalInfo("");
       setCapturedImage(null); // Clear the captured image after submission
     }
@@ -86,7 +99,7 @@ const AddSpendingPage = () => {
   }, [uploadMode]);
 
   const handleUploadModeChange = (
-    event: React.MouseEvent<HTMLElement>,
+    _event: React.MouseEvent<HTMLElement>,
     newMode: "manual" | "camera" | null
   ) => {
     if (newMode !== null) {
@@ -97,19 +110,14 @@ const AddSpendingPage = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
       if (currentUser) {
-        console.log("User is logged in on AddSpendingPage:", currentUser.uid);
-        console.log(currentUser);
-        setLoading(false);
-      } else {
-        console.log("No user logged in on AddSpendingPage.");
+        setIsAuthenticated(true);
       }
     });
     return () => unsubscribe();
   }, []);
 
-  if (loading) {
+  if (!authenticated) {
     return <p>Please login to view this page</p>;
   }
 
@@ -161,7 +169,7 @@ const AddSpendingPage = () => {
               fullWidth
               type="number"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => setAmount(parseFloat(e.target.value))}
             />
             <TextField
               label="Additional Info (Optional)"

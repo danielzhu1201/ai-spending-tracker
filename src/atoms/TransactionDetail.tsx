@@ -11,7 +11,6 @@ interface TransactionDetailProps {
 const TransactionDetail = ({
   icon,
   merchant,
-  date,
   amount,
   type,
 }: TransactionDetailProps) => {

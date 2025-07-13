@@ -1,26 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import HomePage from "./pages/HomePage";
-import TransactionPage from "./pages/TransactionPage"; // Updated import
-import AddSpendingPage from "./pages/AddSpendingPage"; // Updated import
+import TransactionPage from "./pages/TransactionPage";
+import AddSpendingPage from "./pages/AddSpendingPage";
+import SpendingSummaryPage from "./pages/SpendingSummaryPage";
 import { Paper, BottomNavigation, BottomNavigationAction } from "@mui/material";
 import {
   Home as HomeIcon,
-  ReceiptLong as ReceiptLongIcon, // Updated icon
-  AddCircleOutline as AddCircleOutlineIcon, // Updated icon
+  ReceiptLong as ReceiptLongIcon,
+  AddCircleOutline as AddCircleOutlineIcon,
+  Summarize as SummarizeIcon,
 } from "@mui/icons-material";
 import "./Viewport.css";
 
 const pathToValueMap: Record<string, number> = {
   "/": 0,
-  "/transactions": 1, // Updated path
-  "/add-spending": 2, // Updated path
+  "/transactions": 1,
+  "/add-spending": 2,
+  "/spending-summary": 3,
 };
 
 const valueToPathMap: Record<number, string> = {
   0: "/",
-  1: "/transactions", // Updated path
-  2: "/add-spending", // Updated path
+  1: "/transactions",
+  2: "/add-spending",
+  3: "/spending-summary",
 };
 
 const Viewport = () => {
@@ -36,7 +40,7 @@ const Viewport = () => {
   }, [location.pathname]);
 
   const handleNavigationChange = (
-    event: React.SyntheticEvent,
+    _event: React.SyntheticEvent,
     newValue: number
   ) => {
     setValue(newValue);
@@ -51,6 +55,7 @@ const Viewport = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/transactions" element={<TransactionPage />} />
           <Route path="/add-spending" element={<AddSpendingPage />} />
+          <Route path="/spending-summary" element={<SpendingSummaryPage />} />
         </Routes>
       </main>
 
@@ -73,6 +78,7 @@ const Viewport = () => {
             label="Add Spending"
             icon={<AddCircleOutlineIcon />}
           />
+          <BottomNavigationAction label="Summary" icon={<SummarizeIcon />} />
         </BottomNavigation>
       </Paper>
     </>
