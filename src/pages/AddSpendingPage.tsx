@@ -34,8 +34,8 @@ const AddSpendingPage = () => {
   const handleSubmit = () => {
     if (uploadMode === "camera") {
       if (capturedImage) {
-        receiptScan(capturedImage.replace("data:image/jpeg;base64,", "")).then(
-          (response) => {
+        receiptScan(capturedImage.replace("data:image/jpeg;base64,", ""))
+          .then((response) => {
             console.log("Receipt scan response:", response);
             const responseString = response.response;
             const jsonStartIndex = responseString.indexOf("{");
@@ -51,8 +51,10 @@ const AddSpendingPage = () => {
             setCategory(parsedObject.category);
             setAmount(parsedObject.amount);
             setAdditionalInfo("Details from scanned receipt (Edit if needed).");
-          }
-        );
+          })
+          .catch((error) => {
+            console.error("Error scanning receipt:", error);
+          });
         // Switch to manual mode for user review and final submission
         setUploadMode("manual");
         // The capturedImage remains in state and will be submitted with the manual form.

@@ -85,6 +85,7 @@ const TransactionPage = () => {
             setIsDataLoaded(true);
           } catch (error) {
             console.error("Failed to fetch transactions:", error);
+            setIsDataLoaded(true);
           }
         };
 

@@ -82,6 +82,7 @@ const SpendingSummaryPage: React.FC<SpendingSummaryProps> = () => {
       })
       .catch((error) => {
         console.error("Error fetching spending summary:", error);
+        setIsDataLoading(false);
       });
   }, [tabValue]);
 
