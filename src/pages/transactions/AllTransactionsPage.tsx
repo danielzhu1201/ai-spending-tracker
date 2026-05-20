@@ -13,14 +13,10 @@ import { useMemo, useState } from 'react'
 
 import { renderMaterialIcon } from '../../components/icons/materialIconMap'
 import { AppTopBar } from '../../components/layout/AppTopBar'
-import { DesktopSideNav } from '../../components/layout/DesktopSideNav'
 import { MobileBottomNav } from '../../components/layout/MobileBottomNav'
 import { PageContainer } from '../../components/layout/PageContainer'
 import { FilterChip } from '../../components/ui/FilterChip'
-import {
-  desktopTransactionsNavigationItems,
-  mobileNavigationItems,
-} from '../../config/navigation'
+import { mobileNavigationItems } from '../../config/navigation'
 import { transactionsApiResponseMock } from '../../data/mock/transactionsApi'
 import { selectTransactionsPageViewModel } from '../../data/selectors/transactionsSelectors'
 import type { PaymentMethod, Transaction } from '../../types/domain'
@@ -113,48 +109,52 @@ export function AllTransactionsPage() {
     <>
       <AppTopBar title="Aura Finance" />
 
-      <DesktopSideNav
-        items={desktopTransactionsNavigationItems}
-        header={(
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', px: 1 }}>
-            <Avatar
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRrycEdCbpQRIwkZY6ouQmGSk3oJdTqNKM8QFhTJmTogx1BY6yXqXG1lk-RIOofBjl-24-eh2IINu8po59zS0qgm_b7eOqpWPGpKgzcxAUfF_4QQQKN9MNlzR9C3JdtSFgFyCtbRxbkgwO0sz4A3B7WOBxFF3i6sGzGK22lFxfNU2FPQu1NLUlan7J9OEV2-kQ8F9MqgidgmEStDBmKjfrFbFEDCiGPFDBse_n1ZrnRylUQJ8DKwnkvPiGn3WqwHHyRKLB0_7IKTnB"
-              alt="Aura Pro avatar"
-              sx={{ width: 48, height: 48, border: '2px solid var(--aura-primary)' }}
-            />
-            <Stack spacing={0.2}>
-              <Typography variant="body1" sx={{ color: 'var(--aura-primary)', fontWeight: 600 }}>
-                Aura Pro
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'var(--aura-on-surface-variant)' }}>
-                Mindful Spending
-              </Typography>
-              <Box
-                component="span"
-                sx={{
-                  display: 'inline-flex',
-                  width: 'fit-content',
-                  mt: 0.4,
-                  px: 1,
-                  py: 0.2,
-                  borderRadius: '999px',
-                  bgcolor: 'rgba(0, 108, 73, 0.12)',
-                  color: 'var(--aura-secondary)',
-                  fontSize: 10,
-                  fontWeight: 600,
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Premium Plan
-              </Box>
-            </Stack>
-          </Stack>
-        )}
-      />
-
-      <PageContainer className="lg:ml-[280px]">
+      <PageContainer>
         <Stack spacing={3}>
+          <Paper
+            sx={{
+              p: 1.5,
+              borderRadius: '12px',
+              border: '1px solid var(--aura-outline-variant)',
+              bgcolor: 'var(--aura-surface-container-low)',
+            }}
+          >
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', px: 0.5 }}>
+              <Avatar
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRrycEdCbpQRIwkZY6ouQmGSk3oJdTqNKM8QFhTJmTogx1BY6yXqXG1lk-RIOofBjl-24-eh2IINu8po59zS0qgm_b7eOqpWPGpKgzcxAUfF_4QQQKN9MNlzR9C3JdtSFgFyCtbRxbkgwO0sz4A3B7WOBxFF3i6sGzGK22lFxfNU2FPQu1NLUlan7J9OEV2-kQ8F9MqgidgmEStDBmKjfrFbFEDCiGPFDBse_n1ZrnRylUQJ8DKwnkvPiGn3WqwHHyRKLB0_7IKTnB"
+                alt="Aura Pro avatar"
+                sx={{ width: 48, height: 48, border: '2px solid var(--aura-primary)' }}
+              />
+              <Stack spacing={0.2}>
+                <Typography variant="body1" sx={{ color: 'var(--aura-primary)', fontWeight: 600 }}>
+                  Aura Pro
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'var(--aura-on-surface-variant)' }}>
+                  Mindful Spending
+                </Typography>
+                <Box
+                  component="span"
+                  sx={{
+                    display: 'inline-flex',
+                    width: 'fit-content',
+                    mt: 0.4,
+                    px: 1,
+                    py: 0.2,
+                    borderRadius: '999px',
+                    bgcolor: 'rgba(0, 108, 73, 0.12)',
+                    color: 'var(--aura-secondary)',
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Premium Plan
+                </Box>
+              </Stack>
+            </Stack>
+          </Paper>
+
           <Stack spacing={0.5}>
             <Typography variant="h2" sx={{ color: 'var(--aura-primary)' }}>
               Transactions

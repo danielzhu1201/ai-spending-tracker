@@ -4,6 +4,8 @@ import IconButton from '@mui/material/IconButton'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 
+import { APP_MOBILE_MAX_WIDTH } from '../../config/layout'
+
 interface AppTopBarProps {
   title: string
   onNotificationClick?: () => void
@@ -16,6 +18,9 @@ export function AppTopBar({ title, onNotificationClick }: AppTopBarProps) {
       color="transparent"
       elevation={0}
       sx={{
+        width: `min(100%, ${APP_MOBILE_MAX_WIDTH}px)`,
+        left: '50%',
+        transform: 'translateX(-50%)',
         borderBottom: '1px solid var(--aura-outline-variant)',
         backdropFilter: 'blur(12px)',
         backgroundColor: 'rgba(247, 249, 251, 0.85)',
@@ -24,10 +29,10 @@ export function AppTopBar({ title, onNotificationClick }: AppTopBarProps) {
     >
       <Toolbar
         sx={{
-          maxWidth: '80rem',
+          maxWidth: `${APP_MOBILE_MAX_WIDTH}px`,
           width: '100%',
           mx: 'auto',
-          px: { xs: 2, md: 4 },
+          px: 2,
           minHeight: '64px',
           justifyContent: 'space-between',
         }}

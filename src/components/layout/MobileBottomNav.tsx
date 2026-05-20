@@ -3,6 +3,7 @@ import BottomNavigationAction from '@mui/material/BottomNavigationAction'
 import Paper from '@mui/material/Paper'
 import { useLocation, useNavigate } from 'react-router-dom'
 
+import { APP_MOBILE_MAX_WIDTH } from '../../config/layout'
 import type { NavigationItem } from '../../config/navigation'
 
 interface MobileBottomNavProps {
@@ -24,9 +25,10 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
       sx={{
         position: 'fixed',
         bottom: 0,
-        left: 0,
-        right: 0,
-        display: { xs: 'block', md: 'none' },
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: `min(100%, ${APP_MOBILE_MAX_WIDTH}px)`,
+        display: 'block',
         zIndex: 1200,
       }}
     >
@@ -43,11 +45,24 @@ export function MobileBottomNav({ items }: MobileBottomNavProps) {
           py: 0.5,
           '& .MuiBottomNavigationAction-root': {
             minWidth: 64,
+            maxWidth: 'none',
+            flex: '1 1 0',
             color: 'var(--aura-on-surface-variant)',
             borderRadius: '12px',
             mx: 0.5,
+            px: 1,
+            py: 0.75,
+            overflow: 'hidden',
+          },
+          '& .MuiBottomNavigationAction-label': {
+            whiteSpace: 'nowrap',
+            fontSize: '0.7rem',
+            lineHeight: 1.1,
+            mt: 0.25,
           },
           '& .Mui-selected': {
+            minWidth: 110,
+            flex: '1.35 1 0',
             color: 'var(--aura-on-secondary-container)',
             bgcolor: 'var(--aura-secondary-container)',
           },

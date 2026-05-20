@@ -42,7 +42,7 @@ export function ManualExpenseEntryPage() {
     <>
       <AppTopBar title="Aura Finance" />
 
-      <PageContainer className="max-w-2xl">
+      <PageContainer>
         <Stack spacing={3}>
           <Stack spacing={0.75}>
             <Typography variant="h2" sx={{ color: 'var(--aura-on-surface)' }}>

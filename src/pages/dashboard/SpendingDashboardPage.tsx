@@ -50,8 +50,8 @@ export function SpendingDashboardPage() {
             </Stack>
           </Stack>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <GlassCard className="md:col-span-2">
+          <div className="grid grid-cols-1 gap-6">
+            <GlassCard>
               <Stack spacing={3}>
                 <Stack spacing={1.5}>
                   <Typography variant="caption" sx={{ color: 'var(--aura-on-surface-variant)' }}>
