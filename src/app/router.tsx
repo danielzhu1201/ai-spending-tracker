@@ -1,6 +1,7 @@
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom'
 
 import { SpendingDashboardPage } from '../pages/dashboard/SpendingDashboardPage'
+import { ManualExpenseEntryPage } from '../pages/manual-entry/ManualExpenseEntryPage'
 import { ComingSoonPage } from '../pages/shared/ComingSoonPage'
 
 const router = createBrowserRouter([
@@ -14,12 +15,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/manual-entry',
-    element: (
-      <ComingSoonPage
-        screenLabel="Manual Expense Entry"
-        routeLabel="/manual-entry"
-      />
-    ),
+    element: <ManualExpenseEntryPage />,
   },
   {
     path: '/transactions',
