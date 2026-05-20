@@ -2,6 +2,7 @@ import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom'
 
 import { SpendingDashboardPage } from '../pages/dashboard/SpendingDashboardPage'
 import { ManualExpenseEntryPage } from '../pages/manual-entry/ManualExpenseEntryPage'
+import { AllTransactionsPage } from '../pages/transactions/AllTransactionsPage'
 import { ComingSoonPage } from '../pages/shared/ComingSoonPage'
 
 const router = createBrowserRouter([
@@ -19,12 +20,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/transactions',
-    element: (
-      <ComingSoonPage
-        screenLabel="All Transactions"
-        routeLabel="/transactions"
-      />
-    ),
+    element: <AllTransactionsPage />,
   },
   {
     path: '/insights',

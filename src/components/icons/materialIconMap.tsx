@@ -1,6 +1,7 @@
 import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded'
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded'
 import ContactlessRoundedIcon from '@mui/icons-material/ContactlessRounded'
+import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded'
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded'
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded'
 import LocalCafeRoundedIcon from '@mui/icons-material/LocalCafeRounded'
@@ -20,6 +21,7 @@ const iconMap = {
   commute: DirectionsCarRoundedIcon,
   directions_car: DirectionsCarRoundedIcon,
   contactless: ContactlessRoundedIcon,
+  credit_card: CreditCardRoundedIcon,
   account_balance: AccountBalanceRoundedIcon,
   autorenew: AutorenewRoundedIcon,
   more_horiz: MoreHorizRoundedIcon,

@@ -2,15 +2,17 @@ import Box from '@mui/material/Box'
 import ButtonBase from '@mui/material/ButtonBase'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import type { ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import type { NavigationItem } from '../../config/navigation'
 
 interface DesktopSideNavProps {
   items: NavigationItem[]
+  header?: ReactNode
 }
 
-export function DesktopSideNav({ items }: DesktopSideNavProps) {
+export function DesktopSideNav({ items, header }: DesktopSideNavProps) {
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -34,6 +36,7 @@ export function DesktopSideNav({ items }: DesktopSideNavProps) {
           border: '1px solid var(--aura-outline-variant)',
         }}
       >
+        {header ? <Box sx={{ mb: 2 }}>{header}</Box> : null}
         {items.map((item) => {
           const selected = location.pathname.startsWith(item.path)
 
