@@ -2,6 +2,8 @@ import Fab from '@mui/material/Fab'
 import Tooltip from '@mui/material/Tooltip'
 import type { ReactNode } from 'react'
 
+import { APP_MOBILE_MAX_WIDTH } from '../../config/layout'
+
 interface PrimaryFabProps {
   icon: ReactNode
   label: string
@@ -16,8 +18,8 @@ export function PrimaryFab({ icon, label, onClick }: PrimaryFabProps) {
         onClick={onClick}
         sx={{
           position: 'fixed',
-          right: { xs: 24, md: 48 },
-          bottom: { xs: 92, md: 40 },
+          right: `calc((100vw - min(100vw, ${APP_MOBILE_MAX_WIDTH}px)) / 2 + 24px)`,
+          bottom: 92,
           zIndex: 1250,
           width: 56,
           height: 56,

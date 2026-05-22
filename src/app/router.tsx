@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 
 import { SpendingDashboardPage } from '../pages/dashboard/SpendingDashboardPage'
+import { InsightsPage } from '../pages/insights/InsightsPage'
 import { ManualExpenseEntryPage } from '../pages/manual-entry/ManualExpenseEntryPage'
 import { AllTransactionsPage } from '../pages/transactions/AllTransactionsPage'
 import { ComingSoonPage } from '../pages/shared/ComingSoonPage'
@@ -12,15 +13,7 @@ export function AppRouter() {
       <Route path="/dashboard" element={<SpendingDashboardPage />} />
       <Route path="/manual-entry" element={<ManualExpenseEntryPage />} />
       <Route path="/transactions" element={<AllTransactionsPage />} />
-      <Route
-        path="/insights"
-        element={
-          <ComingSoonPage
-            screenLabel="AI Spending Insights"
-            routeLabel="/insights"
-          />
-        }
-      />
+      <Route path="/insights" element={<InsightsPage />} />
       <Route
         path="/scan"
         element={
