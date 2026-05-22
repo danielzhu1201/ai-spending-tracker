@@ -15,10 +15,7 @@ import type { ChangeEvent } from 'react'
 
 import { CategoryChipGroup } from '../../components/forms/CategoryChipGroup'
 import { LabeledInput } from '../../components/forms/LabeledInput'
-import { AppTopBar } from '../../components/layout/AppTopBar'
-import { MobileBottomNav } from '../../components/layout/MobileBottomNav'
 import { PageContainer } from '../../components/layout/PageContainer'
-import { mobileNavigationItems } from '../../config/navigation'
 import {
   manualExpenseCategoryOptionsMock,
   manualExpenseDraftMock,
@@ -40,8 +37,6 @@ export function ManualExpenseEntryPage() {
 
   return (
     <>
-      <AppTopBar title="Aura Finance" />
-
       <PageContainer>
         <Stack spacing={3}>
           <Stack spacing={0.75}>
@@ -240,8 +235,6 @@ export function ManualExpenseEntryPage() {
           </Paper>
         </Stack>
       </PageContainer>
-
-      <MobileBottomNav items={mobileNavigationItems} />
     </>
   )
 }

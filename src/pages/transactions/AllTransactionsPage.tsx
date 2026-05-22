@@ -12,11 +12,8 @@ import Typography from '@mui/material/Typography'
 import { useMemo, useState } from 'react'
 
 import { renderMaterialIcon } from '../../components/icons/materialIconMap'
-import { AppTopBar } from '../../components/layout/AppTopBar'
-import { MobileBottomNav } from '../../components/layout/MobileBottomNav'
 import { PageContainer } from '../../components/layout/PageContainer'
 import { FilterChip } from '../../components/ui/FilterChip'
-import { mobileNavigationItems } from '../../config/navigation'
 import { transactionsApiResponseMock } from '../../data/mock/transactionsApi'
 import { selectTransactionsPageViewModel } from '../../data/selectors/transactionsSelectors'
 import type { PaymentMethod, Transaction } from '../../types/domain'
@@ -107,8 +104,6 @@ export function AllTransactionsPage() {
 
   return (
     <>
-      <AppTopBar title="Aura Finance" />
-
       <PageContainer>
         <Stack spacing={3}>
           <Paper
@@ -367,8 +362,6 @@ export function AllTransactionsPage() {
           </Box>
         </Stack>
       </PageContainer>
-
-      <MobileBottomNav items={mobileNavigationItems} />
     </>
   )
 }

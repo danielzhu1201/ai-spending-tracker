@@ -4,14 +4,11 @@ import LinearProgress from '@mui/material/LinearProgress'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 
-import { AppTopBar } from '../../components/layout/AppTopBar'
-import { MobileBottomNav } from '../../components/layout/MobileBottomNav'
 import { PageContainer } from '../../components/layout/PageContainer'
 import { GlassCard } from '../../components/ui/GlassCard'
 import { MetricPill } from '../../components/ui/MetricPill'
 import { PrimaryFab } from '../../components/ui/PrimaryFab'
 import { TransactionGroupList } from '../../components/transactions/TransactionGroupList'
-import { mobileNavigationItems } from '../../config/navigation'
 import { dashboardApiResponseMock } from '../../data/mock/dashboardApi'
 import {
   selectDashboardSummary,
@@ -25,8 +22,6 @@ const transactionGroups = selectDashboardTransactionGroups(dashboardApiResponseM
 export function SpendingDashboardPage() {
   return (
     <>
-      <AppTopBar title="Aura Finance" />
-
       <PageContainer>
         <Stack spacing={3}>
           <Stack
@@ -200,7 +195,6 @@ export function SpendingDashboardPage() {
       </PageContainer>
 
       <PrimaryFab icon={<DocumentScannerRoundedIcon />} label="Scan Receipt" />
-      <MobileBottomNav items={mobileNavigationItems} />
     </>
   )
 }

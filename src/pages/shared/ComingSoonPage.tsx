@@ -4,32 +4,26 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useNavigate } from 'react-router-dom'
 
-import { AppTopBar } from '../../components/layout/AppTopBar'
-import { MobileBottomNav } from '../../components/layout/MobileBottomNav'
 import { PageContainer } from '../../components/layout/PageContainer'
-import { mobileNavigationItems } from '../../config/navigation'
 
 interface ComingSoonPageProps {
   screenLabel: string
   routeLabel: string
-  showNavigation?: boolean
 }
 
 export function ComingSoonPage({
   screenLabel,
   routeLabel,
-  showNavigation = true,
 }: ComingSoonPageProps) {
   const navigate = useNavigate()
 
   return (
     <>
-      {showNavigation ? <AppTopBar title="Aura Finance" /> : null}
-      <PageContainer withBottomNavSpace={showNavigation}>
+      <PageContainer>
         <Stack
           spacing={2}
           sx={{
-            mt: showNavigation ? 2 : 8,
+            mt: 2,
             maxWidth: 680,
             mx: 'auto',
             p: 4,
@@ -59,7 +53,6 @@ export function ComingSoonPage({
           </Button>
         </Stack>
       </PageContainer>
-      {showNavigation ? <MobileBottomNav items={mobileNavigationItems} /> : null}
     </>
   )
 }
