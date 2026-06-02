@@ -1,10 +1,7 @@
-import type { FilterOption, TransactionInfo } from '../../types/domain'
-import { transactionFilterOptionsMock } from '../mock/futureScreens'
+import type { TransactionInfo } from '../../types/domain'
 
 interface TransactionsPageViewModel {
   searchPlaceholder: string
-  timeFilters: FilterOption[]
-  categoryFilters: FilterOption[]
   transactions: TransactionInfo[]
 }
 
@@ -13,8 +10,6 @@ export function selectTransactionsPageViewModel(
 ): TransactionsPageViewModel {
   return {
     searchPlaceholder: 'Search notes, categories, or amounts...',
-    timeFilters: transactionFilterOptionsMock.filter((filter) => filter.group === 'time'),
-    categoryFilters: transactionFilterOptionsMock.filter((filter) => filter.group === 'category'),
     transactions: api,
   }
 }
