@@ -1,160 +1,173 @@
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
-import Avatar from '@mui/material/Avatar'
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Divider from '@mui/material/Divider'
-import List from '@mui/material/List'
-import ListItemButton from '@mui/material/ListItemButton'
-import Paper from '@mui/material/Paper'
-import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
-import Typography from '@mui/material/Typography'
-import { useMemo, useState } from 'react'
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import Box from "@mui/material/Box";
+import Divider from "@mui/material/Divider";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { useMemo, useState } from "react";
 
-import { renderMaterialIcon } from '../../components/icons/materialIconMap'
-import { PageContainer } from '../../components/layout/PageContainer'
-import { FilterChip } from '../../components/ui/FilterChip'
-import { transactionsApiResponseMock } from '../../data/mock/transactionsApi'
-import { selectTransactionsPageViewModel } from '../../data/selectors/transactionsSelectors'
-import type { PaymentMethod, Transaction } from '../../types/domain'
-import { formatMoney } from '../../utils/formatters'
+import { renderMaterialIcon } from "../../components/icons/materialIconMap";
+import { PageContainer } from "../../components/layout/PageContainer";
+import { TransactionRow } from "../../components/transactions/TransactionRow";
+import { FilterChip } from "../../components/ui/FilterChip";
+import { transactionsApiResponseMock } from "../../data/mock/transactionsApi";
+import { selectTransactionsPageViewModel } from "../../data/selectors/transactionsSelectors";
+import type { TransactionCategory, TransactionInfo } from "../../types/domain";
+import { formatMoney } from "../../utils/formatters";
+import {
+  getManualExpenseCategoryDisplay,
+  toManualExpenseMoney,
+} from "../../utils/manualExpense";
 
-const paymentMethodIconMap: Record<PaymentMethod, string> = {
-  credit: 'credit_card',
-  debit: 'contactless',
-  'direct-deposit': 'account_balance',
-  'auto-pay': 'autorenew',
-  cash: 'payments',
-  other: 'more_horiz',
+const viewModel = selectTransactionsPageViewModel(transactionsApiResponseMock);
+
+type TransactionTimeFilter = "this-week" | "this-month" | "last-3-months";
+
+const timeFilters: Array<{
+  id: string;
+  label: string;
+  value: TransactionTimeFilter;
+  selected?: boolean;
+}> = [
+  {
+    id: "time-this-week",
+    label: "This Week",
+    value: "this-week",
+  },
+  {
+    id: "time-this-month",
+    label: "This Month",
+    value: "this-month",
+    selected: true,
+  },
+  {
+    id: "time-last-3-months",
+    label: "Last 3 Months",
+    value: "last-3-months",
+  },
+];
+
+function parseTransactionDate(date: string): Date {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
 
-const viewModel = selectTransactionsPageViewModel(transactionsApiResponseMock)
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function startOfWeek(date: Date): Date {
+  const start = startOfDay(date);
+  const mondayOffset = (start.getDay() + 6) % 7;
+  start.setDate(start.getDate() - mondayOffset);
+  return start;
+}
+
+function startOfLastThreeMonths(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth() - 2, 1);
+}
 
 export function AllTransactionsPage() {
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState("");
   const [selectedTimeValue, setSelectedTimeValue] = useState(
-    viewModel.timeFilters.find((filter) => filter.selected)?.value ?? viewModel.timeFilters[0]?.value,
-  )
-  const [selectedCategoryValue, setSelectedCategoryValue] = useState<string | null>(null)
+    timeFilters.find((filter) => filter.selected)?.value ??
+      timeFilters[0].value,
+  );
+  const [selectedCategoryValue, setSelectedCategoryValue] =
+    useState<TransactionCategory | null>(null);
 
-  const filteredGroups = useMemo(() => {
-    const allDates = viewModel.groups.flatMap((group) =>
-      group.transactions.map((transaction) => new Date(transaction.occurredAt).getTime()),
-    )
-    const latestTimestamp = allDates.length > 0 ? Math.max(...allDates) : 0
+  const categoryFilters = useMemo(() => {
+    const categories = Array.from(
+      new Set(
+        viewModel.transactions.map((transaction) => transaction.category),
+      ),
+    );
 
-    const matchesTimeFilter = (transaction: Transaction): boolean => {
-      const txTime = new Date(transaction.occurredAt).getTime()
-      const diffMs = latestTimestamp - txTime
+    return categories.map((category) => {
+      const categoryDisplay = getManualExpenseCategoryDisplay(category);
+
+      return {
+        id: `category-${category}`,
+        label: categoryDisplay.label,
+        value: category,
+        icon: categoryDisplay.icon,
+      };
+    });
+  }, []);
+
+  const filteredTransactions = useMemo(() => {
+    const today = startOfDay(new Date());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const weekStart = startOfWeek(today);
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastThreeMonthsStart = startOfLastThreeMonths(today);
+
+    const matchesTimeFilter = (transaction: TransactionInfo): boolean => {
+      const transactionDate = parseTransactionDate(transaction.transactionDate);
 
       switch (selectedTimeValue) {
-        case 'this-week':
-          return diffMs <= 7 * 24 * 60 * 60 * 1000
-        case 'last-3-months':
-          return diffMs <= 90 * 24 * 60 * 60 * 1000
-        case 'this-month': {
-          const latestDate = new Date(latestTimestamp)
-          const txDate = new Date(txTime)
+        case "this-week":
+          return transactionDate >= weekStart && transactionDate < tomorrow;
+        case "last-3-months":
           return (
-            latestDate.getFullYear() === txDate.getFullYear() &&
-            latestDate.getMonth() === txDate.getMonth()
-          )
-        }
+            transactionDate >= lastThreeMonthsStart &&
+            transactionDate < tomorrow
+          );
+        case "this-month":
+          return transactionDate >= monthStart && transactionDate < tomorrow;
         default:
-          return true
+          return true;
       }
-    }
+    };
 
-    const queryLower = query.trim().toLowerCase()
+    const queryLower = query.trim().toLowerCase();
 
-    return viewModel.groups
-      .map((group) => {
-        const transactions = group.transactions.filter((transaction) => {
-          if (selectedCategoryValue && transaction.category !== selectedCategoryValue) {
-            return false
-          }
+    return viewModel.transactions.filter((transaction) => {
+      if (
+        selectedCategoryValue &&
+        transaction.category !== selectedCategoryValue
+      ) {
+        return false;
+      }
 
-          if (!matchesTimeFilter(transaction)) {
-            return false
-          }
+      if (!matchesTimeFilter(transaction)) {
+        return false;
+      }
 
-          if (queryLower.length === 0) {
-            return true
-          }
+      if (queryLower.length === 0) {
+        return true;
+      }
 
-          const searchableText = [
-            transaction.merchant,
-            transaction.categoryLabel,
-            transaction.paymentMethodLabel,
-            formatMoney(transaction.money),
-          ]
-            .join(' ')
-            .toLowerCase()
+      const categoryDisplay = getManualExpenseCategoryDisplay(
+        transaction.category,
+      );
+      const searchableText = [
+        transaction.note,
+        categoryDisplay.label,
+        transaction.transactionDate,
+        formatMoney(toManualExpenseMoney(transaction)),
+      ]
+        .join(" ")
+        .toLowerCase();
 
-          return searchableText.includes(queryLower)
-        })
-
-        return {
-          ...group,
-          transactions,
-        }
-      })
-      .filter((group) => group.transactions.length > 0)
-  }, [query, selectedCategoryValue, selectedTimeValue])
+      return searchableText.includes(queryLower);
+    });
+  }, [query, selectedCategoryValue, selectedTimeValue]);
 
   return (
     <>
       <PageContainer>
         <Stack spacing={3}>
-          <Paper
-            sx={{
-              p: 1.5,
-              borderRadius: '12px',
-              border: '1px solid var(--aura-outline-variant)',
-              bgcolor: 'var(--aura-surface-container-low)',
-            }}
-          >
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', px: 0.5 }}>
-              <Avatar
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRrycEdCbpQRIwkZY6ouQmGSk3oJdTqNKM8QFhTJmTogx1BY6yXqXG1lk-RIOofBjl-24-eh2IINu8po59zS0qgm_b7eOqpWPGpKgzcxAUfF_4QQQKN9MNlzR9C3JdtSFgFyCtbRxbkgwO0sz4A3B7WOBxFF3i6sGzGK22lFxfNU2FPQu1NLUlan7J9OEV2-kQ8F9MqgidgmEStDBmKjfrFbFEDCiGPFDBse_n1ZrnRylUQJ8DKwnkvPiGn3WqwHHyRKLB0_7IKTnB"
-                alt="Aura Pro avatar"
-                sx={{ width: 48, height: 48, border: '2px solid var(--aura-primary)' }}
-              />
-              <Stack spacing={0.2}>
-                <Typography variant="body1" sx={{ color: 'var(--aura-primary)', fontWeight: 600 }}>
-                  Aura Pro
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'var(--aura-on-surface-variant)' }}>
-                  Mindful Spending
-                </Typography>
-                <Box
-                  component="span"
-                  sx={{
-                    display: 'inline-flex',
-                    width: 'fit-content',
-                    mt: 0.4,
-                    px: 1,
-                    py: 0.2,
-                    borderRadius: '999px',
-                    bgcolor: 'rgba(0, 108, 73, 0.12)',
-                    color: 'var(--aura-secondary)',
-                    fontSize: 10,
-                    fontWeight: 600,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Premium Plan
-                </Box>
-              </Stack>
-            </Stack>
-          </Paper>
-
           <Stack spacing={0.5}>
-            <Typography variant="h2" sx={{ color: 'var(--aura-primary)' }}>
+            <Typography variant="h2" sx={{ color: "var(--aura-primary)" }}>
               Transactions
             </Typography>
-            <Typography variant="body1" sx={{ color: 'var(--aura-on-surface-variant)' }}>
+            <Typography
+              variant="body1"
+              sx={{ color: "var(--aura-on-surface-variant)" }}
+            >
               Review your recent mindful spending.
             </Typography>
           </Stack>
@@ -165,14 +178,14 @@ export function AllTransactionsPage() {
               placeholder={viewModel.searchPlaceholder}
               value={query}
               onChange={(event) => {
-                setQuery(event.target.value)
+                setQuery(event.target.value);
               }}
               slotProps={{
                 input: {
                   startAdornment: (
                     <SearchRoundedIcon
                       sx={{
-                        color: 'var(--aura-outline)',
+                        color: "var(--aura-outline)",
                         mr: 1,
                       }}
                     />
@@ -180,45 +193,49 @@ export function AllTransactionsPage() {
                 },
               }}
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  bgcolor: 'var(--aura-surface-container-low)',
-                  borderRadius: '12px',
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: "var(--aura-surface-container-low)",
+                  borderRadius: "12px",
                 },
               }}
             />
 
-            <Box className="no-scrollbar" sx={{ overflowX: 'auto', pb: 0.5 }}>
+            <Box className="no-scrollbar" sx={{ overflowX: "auto", pb: 0.5 }}>
               <Stack
                 direction="row"
                 spacing={1}
                 sx={{
-                  width: 'max-content',
-                  alignItems: 'center',
+                  width: "max-content",
+                  alignItems: "center",
                 }}
               >
-                {viewModel.timeFilters.map((filter) => (
+                {timeFilters.map((filter) => (
                   <FilterChip
                     key={filter.id}
                     label={filter.label}
                     selected={selectedTimeValue === filter.value}
                     onClick={() => {
-                      setSelectedTimeValue(filter.value)
+                      setSelectedTimeValue(filter.value);
                     }}
                   />
                 ))}
 
                 <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
 
-                {viewModel.categoryFilters.map((filter) => (
+                {categoryFilters.map((filter) => (
                   <FilterChip
                     key={filter.id}
                     label={filter.label}
-                    icon={filter.icon ? renderMaterialIcon(filter.icon, { fontSize: 'small' }) : undefined}
+                    icon={
+                      filter.icon
+                        ? renderMaterialIcon(filter.icon, { fontSize: "small" })
+                        : undefined
+                    }
                     selected={selectedCategoryValue === filter.value}
                     onClick={() => {
                       setSelectedCategoryValue((current) =>
                         current === filter.value ? null : filter.value,
-                      )
+                      );
                     }}
                   />
                 ))}
@@ -229,139 +246,40 @@ export function AllTransactionsPage() {
           <Paper
             variant="outlined"
             sx={{
-              overflow: 'hidden',
-              borderRadius: '12px',
-              borderColor: 'var(--aura-outline-variant)',
+              overflow: "hidden",
+              borderRadius: "12px",
+              borderColor: "var(--aura-outline-variant)",
             }}
           >
-            {filteredGroups.length === 0 ? (
+            {filteredTransactions.length === 0 ? (
               <Stack spacing={1} sx={{ p: 3 }}>
-                <Typography variant="body1" sx={{ color: 'var(--aura-primary)' }}>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "var(--aura-primary)" }}
+                >
                   No transactions found
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'var(--aura-on-surface-variant)' }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "var(--aura-on-surface-variant)" }}
+                >
                   Try changing filters or search terms.
                 </Typography>
               </Stack>
             ) : (
-              filteredGroups.map((group) => (
-                <Box key={group.id}>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      display: 'block',
-                      px: 2,
-                      py: 1,
-                      bgcolor: 'var(--aura-surface-container-low)',
-                      color: 'var(--aura-on-surface-variant)',
-                      letterSpacing: '0.08em',
-                    }}
-                  >
-                    {group.label}
-                  </Typography>
-
-                  <List disablePadding>
-                    {group.transactions.map((transaction, index) => {
-                      const isIncome = transaction.kind === 'income'
-
-                      return (
-                        <Box key={transaction.id}>
-                          <ListItemButton sx={{ py: 1.75, px: 2 }}>
-                            <Stack
-                              direction="row"
-                              spacing={1.5}
-                              sx={{ width: '100%', alignItems: 'center' }}
-                            >
-                              <Box
-                                sx={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: '999px',
-                                  display: 'grid',
-                                  placeItems: 'center',
-                                  bgcolor: isIncome
-                                    ? 'rgba(108, 248, 187, 0.3)'
-                                    : 'rgba(218, 226, 253, 0.45)',
-                                  color: isIncome
-                                    ? 'var(--aura-secondary)'
-                                    : 'var(--aura-primary-container)',
-                                }}
-                              >
-                                {renderMaterialIcon(transaction.icon, { fontSize: 'small' })}
-                              </Box>
-
-                              <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <Typography
-                                  variant="body1"
-                                  sx={{ color: 'var(--aura-on-surface)', fontWeight: 500 }}
-                                  noWrap
-                                >
-                                  {transaction.merchant}
-                                </Typography>
-                                <Stack
-                                  direction="row"
-                                  spacing={0.75}
-                                  sx={{ mt: 0.3, alignItems: 'center' }}
-                                >
-                                  <Typography
-                                    variant="body2"
-                                    sx={{ color: 'var(--aura-on-surface-variant)', fontSize: '13px' }}
-                                  >
-                                    {transaction.categoryLabel}
-                                  </Typography>
-                                  <Box
-                                    sx={{
-                                      width: 4,
-                                      height: 4,
-                                      borderRadius: '999px',
-                                      bgcolor: 'var(--aura-outline)',
-                                    }}
-                                  />
-                                  <Stack
-                                    direction="row"
-                                    spacing={0.4}
-                                    sx={{ alignItems: 'center' }}
-                                  >
-                                    {renderMaterialIcon(paymentMethodIconMap[transaction.paymentMethod], {
-                                      sx: { fontSize: 14, color: 'var(--aura-on-surface-variant)' },
-                                    })}
-                                    <Typography
-                                      variant="body2"
-                                      sx={{ color: 'var(--aura-on-surface-variant)', fontSize: '13px' }}
-                                    >
-                                      {transaction.paymentMethodLabel}
-                                    </Typography>
-                                  </Stack>
-                                </Stack>
-                              </Box>
-
-                              <Typography
-                                sx={{
-                                  fontFamily: 'var(--aura-data-mono, JetBrains Mono, ui-monospace, monospace)',
-                                  color: isIncome ? 'var(--aura-secondary)' : 'var(--aura-on-surface)',
-                                  fontWeight: isIncome ? 600 : 500,
-                                }}
-                              >
-                                {formatMoney(transaction.money)}
-                              </Typography>
-                            </Stack>
-                          </ListItemButton>
-
-                          {index < group.transactions.length - 1 ? <Divider /> : null}
-                        </Box>
-                      )
-                    })}
-                  </List>
-                </Box>
-              ))
+              <Stack spacing={0}>
+                {filteredTransactions.map((transaction, index) => (
+                  <TransactionRow
+                    key={`${transaction.transactionDate}-${transaction.category}-${transaction.amount}-${index}`}
+                    transaction={transaction}
+                    withDivider={index < filteredTransactions.length - 1}
+                  />
+                ))}
+              </Stack>
             )}
           </Paper>
-
-          <Box sx={{ textAlign: 'center', pb: 2 }}>
-            <Button sx={{ color: 'var(--aura-primary)' }}>Load more transactions</Button>
-          </Box>
         </Stack>
       </PageContainer>
     </>
-  )
+  );
 }
