@@ -23,6 +23,8 @@ import {
 } from '../../data/mock/futureScreens'
 import type { TransactionCategory } from '../../types/domain'
 
+const transactionsEndpoint = 'http://127.0.0.1:8000/transactions'
+
 export function ManualExpenseEntryPage() {
   const [draft, setDraft] = useState(manualExpenseDraftMock)
 
@@ -34,6 +36,16 @@ export function ManualExpenseEntryPage() {
     const parsed = dayjs(draft.transactionDate)
     return parsed.isValid() ? parsed : null
   }, [draft.transactionDate])
+
+  const addExpense = async () => {
+    await fetch(transactionsEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(draft),
+    })
+  }
 
   return (
     <>
@@ -179,6 +191,9 @@ export function ManualExpenseEntryPage() {
             variant="contained"
             size="large"
             startIcon={<AddRoundedIcon />}
+            onClick={() => {
+              void addExpense()
+            }}
             sx={{
               height: 56,
               borderRadius: '12px',
