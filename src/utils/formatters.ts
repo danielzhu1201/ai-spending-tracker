@@ -3,7 +3,7 @@ import type { MoneyValue } from '../types/domain'
 export function formatMoney(value: MoneyValue): string {
   const formatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: value.currency,
+    currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })

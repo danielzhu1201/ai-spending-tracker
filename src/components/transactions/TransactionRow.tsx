@@ -6,16 +6,21 @@ import Typography from '@mui/material/Typography'
 
 import { renderMaterialIcon } from '../icons/materialIconMap'
 import { IconBadge } from '../ui/IconBadge'
-import type { Transaction } from '../../types/domain'
+import type { TransactionInfo } from '../../types/domain'
 import { formatMoney } from '../../utils/formatters'
+import {
+  getManualExpenseCategoryDisplay,
+  toManualExpenseMoney,
+} from '../../utils/manualExpense'
 
 interface TransactionRowProps {
-  transaction: Transaction
+  transaction: TransactionInfo
   withDivider?: boolean
 }
 
 export function TransactionRow({ transaction, withDivider = true }: TransactionRowProps) {
-  const isIncome = transaction.kind === 'income'
+  const categoryDisplay = getManualExpenseCategoryDisplay(transaction.category)
+  const title = transaction.note.trim() || categoryDisplay.label
 
   return (
     <>
@@ -36,8 +41,8 @@ export function TransactionRow({ transaction, withDivider = true }: TransactionR
             width: '100%',
           }}
         >
-          <IconBadge tone={isIncome ? 'positive' : 'default'}>
-            {renderMaterialIcon(transaction.icon, { fontSize: 'small' })}
+          <IconBadge tone="default">
+            {renderMaterialIcon(categoryDisplay.icon, { fontSize: 'small' })}
           </IconBadge>
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -46,10 +51,10 @@ export function TransactionRow({ transaction, withDivider = true }: TransactionR
               sx={{ color: 'var(--aura-primary)', fontWeight: 500 }}
               noWrap
             >
-              {transaction.merchant}
+              {title}
             </Typography>
             <Typography variant="body2" sx={{ color: 'var(--aura-on-surface-variant)' }}>
-              {transaction.categoryLabel} • {transaction.tag ?? transaction.paymentMethodLabel}
+              {categoryDisplay.label} • {transaction.transactionDate}
             </Typography>
           </Box>
 
@@ -61,21 +66,19 @@ export function TransactionRow({ transaction, withDivider = true }: TransactionR
             <Typography
               sx={{
                 fontFamily: 'var(--aura-data-mono, JetBrains Mono, ui-monospace, monospace)',
-                color: isIncome ? 'var(--aura-secondary)' : 'var(--aura-primary)',
-                fontWeight: isIncome ? 600 : 500,
+                color: 'var(--aura-primary)',
+                fontWeight: 500,
               }}
             >
-              {formatMoney(transaction.money)}
+              {formatMoney(toManualExpenseMoney(transaction))}
             </Typography>
             <Typography
               variant="caption"
               sx={{
-                color: isIncome
-                  ? 'var(--aura-secondary)'
-                  : 'var(--aura-on-surface-variant)',
+                color: 'var(--aura-on-surface-variant)',
               }}
             >
-              {isIncome ? 'Income' : 'Debit'}
+              Expense
             </Typography>
           </Box>
         </Stack>
