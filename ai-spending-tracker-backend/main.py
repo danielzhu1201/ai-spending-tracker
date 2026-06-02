@@ -1,6 +1,7 @@
 from typing import Literal
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 
@@ -25,6 +26,13 @@ class ManualExpenseDraft(BaseModel):
 
 
 app = FastAPI(title="AI Spending Tracker API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:5174"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
+)
 
 transactions: list[ManualExpenseDraft] = [
 ]
