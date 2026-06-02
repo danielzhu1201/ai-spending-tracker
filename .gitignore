@@ -1,5 +1,6 @@
 # dependencies
 node_modules/
+.venv/
 
 # build output
 dist/
@@ -37,3 +38,5 @@ Thumbs.db
 # misc
 *.local
 *.tsbuildinfo
+__pycache__/
+.pytest_cache/
