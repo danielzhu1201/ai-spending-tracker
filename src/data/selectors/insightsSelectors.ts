@@ -1,14 +1,11 @@
-import type {
-  InsightCard,
-  TimeRange,
-} from '../../types/domain'
+import type { InsightCard } from '../../types/domain'
 import type {
   InsightRangeApiValue,
   InsightsApiResponse,
   InsightsRangeApiDto,
 } from '../mock/insightsApi'
 
-export type InsightRange = Extract<TimeRange, 'weekly' | 'monthly' | 'yearly'>
+export type InsightRange = InsightRangeApiValue
 
 export interface InsightRangeOption {
   id: InsightRange

@@ -3,8 +3,6 @@ import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
-import List from '@mui/material/List'
-import ListItemButton from '@mui/material/ListItemButton'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
@@ -13,20 +11,16 @@ import { useMemo, useState } from 'react'
 
 import { renderMaterialIcon } from '../../components/icons/materialIconMap'
 import { PageContainer } from '../../components/layout/PageContainer'
+import { TransactionRow } from '../../components/transactions/TransactionRow'
 import { FilterChip } from '../../components/ui/FilterChip'
 import { transactionsApiResponseMock } from '../../data/mock/transactionsApi'
 import { selectTransactionsPageViewModel } from '../../data/selectors/transactionsSelectors'
-import type { PaymentMethod, Transaction } from '../../types/domain'
+import type { TransactionInfo } from '../../types/domain'
 import { formatMoney } from '../../utils/formatters'
-
-const paymentMethodIconMap: Record<PaymentMethod, string> = {
-  credit: 'credit_card',
-  debit: 'contactless',
-  'direct-deposit': 'account_balance',
-  'auto-pay': 'autorenew',
-  cash: 'payments',
-  other: 'more_horiz',
-}
+import {
+  getManualExpenseCategoryDisplay,
+  toManualExpenseMoney,
+} from '../../utils/manualExpense'
 
 const viewModel = selectTransactionsPageViewModel(transactionsApiResponseMock)
 
@@ -37,14 +31,14 @@ export function AllTransactionsPage() {
   )
   const [selectedCategoryValue, setSelectedCategoryValue] = useState<string | null>(null)
 
-  const filteredGroups = useMemo(() => {
-    const allDates = viewModel.groups.flatMap((group) =>
-      group.transactions.map((transaction) => new Date(transaction.occurredAt).getTime()),
+  const filteredTransactions = useMemo(() => {
+    const allDates = viewModel.transactions.map((transaction) =>
+      new Date(transaction.transactionDate).getTime(),
     )
     const latestTimestamp = allDates.length > 0 ? Math.max(...allDates) : 0
 
-    const matchesTimeFilter = (transaction: Transaction): boolean => {
-      const txTime = new Date(transaction.occurredAt).getTime()
+    const matchesTimeFilter = (transaction: TransactionInfo): boolean => {
+      const txTime = new Date(transaction.transactionDate).getTime()
       const diffMs = latestTimestamp - txTime
 
       switch (selectedTimeValue) {
@@ -67,39 +61,31 @@ export function AllTransactionsPage() {
 
     const queryLower = query.trim().toLowerCase()
 
-    return viewModel.groups
-      .map((group) => {
-        const transactions = group.transactions.filter((transaction) => {
-          if (selectedCategoryValue && transaction.category !== selectedCategoryValue) {
-            return false
-          }
+    return viewModel.transactions.filter((transaction) => {
+      if (selectedCategoryValue && transaction.category !== selectedCategoryValue) {
+        return false
+      }
 
-          if (!matchesTimeFilter(transaction)) {
-            return false
-          }
+      if (!matchesTimeFilter(transaction)) {
+        return false
+      }
 
-          if (queryLower.length === 0) {
-            return true
-          }
+      if (queryLower.length === 0) {
+        return true
+      }
 
-          const searchableText = [
-            transaction.merchant,
-            transaction.categoryLabel,
-            transaction.paymentMethodLabel,
-            formatMoney(transaction.money),
-          ]
-            .join(' ')
-            .toLowerCase()
+      const categoryDisplay = getManualExpenseCategoryDisplay(transaction.category)
+      const searchableText = [
+        transaction.note,
+        categoryDisplay.label,
+        transaction.transactionDate,
+        formatMoney(toManualExpenseMoney(transaction)),
+      ]
+        .join(' ')
+        .toLowerCase()
 
-          return searchableText.includes(queryLower)
-        })
-
-        return {
-          ...group,
-          transactions,
-        }
-      })
-      .filter((group) => group.transactions.length > 0)
+      return searchableText.includes(queryLower)
+    })
   }, [query, selectedCategoryValue, selectedTimeValue])
 
   return (
@@ -234,7 +220,7 @@ export function AllTransactionsPage() {
               borderColor: 'var(--aura-outline-variant)',
             }}
           >
-            {filteredGroups.length === 0 ? (
+            {filteredTransactions.length === 0 ? (
               <Stack spacing={1} sx={{ p: 3 }}>
                 <Typography variant="body1" sx={{ color: 'var(--aura-primary)' }}>
                   No transactions found
@@ -244,116 +230,15 @@ export function AllTransactionsPage() {
                 </Typography>
               </Stack>
             ) : (
-              filteredGroups.map((group) => (
-                <Box key={group.id}>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      display: 'block',
-                      px: 2,
-                      py: 1,
-                      bgcolor: 'var(--aura-surface-container-low)',
-                      color: 'var(--aura-on-surface-variant)',
-                      letterSpacing: '0.08em',
-                    }}
-                  >
-                    {group.label}
-                  </Typography>
-
-                  <List disablePadding>
-                    {group.transactions.map((transaction, index) => {
-                      const isIncome = transaction.kind === 'income'
-
-                      return (
-                        <Box key={transaction.id}>
-                          <ListItemButton sx={{ py: 1.75, px: 2 }}>
-                            <Stack
-                              direction="row"
-                              spacing={1.5}
-                              sx={{ width: '100%', alignItems: 'center' }}
-                            >
-                              <Box
-                                sx={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: '999px',
-                                  display: 'grid',
-                                  placeItems: 'center',
-                                  bgcolor: isIncome
-                                    ? 'rgba(108, 248, 187, 0.3)'
-                                    : 'rgba(218, 226, 253, 0.45)',
-                                  color: isIncome
-                                    ? 'var(--aura-secondary)'
-                                    : 'var(--aura-primary-container)',
-                                }}
-                              >
-                                {renderMaterialIcon(transaction.icon, { fontSize: 'small' })}
-                              </Box>
-
-                              <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <Typography
-                                  variant="body1"
-                                  sx={{ color: 'var(--aura-on-surface)', fontWeight: 500 }}
-                                  noWrap
-                                >
-                                  {transaction.merchant}
-                                </Typography>
-                                <Stack
-                                  direction="row"
-                                  spacing={0.75}
-                                  sx={{ mt: 0.3, alignItems: 'center' }}
-                                >
-                                  <Typography
-                                    variant="body2"
-                                    sx={{ color: 'var(--aura-on-surface-variant)', fontSize: '13px' }}
-                                  >
-                                    {transaction.categoryLabel}
-                                  </Typography>
-                                  <Box
-                                    sx={{
-                                      width: 4,
-                                      height: 4,
-                                      borderRadius: '999px',
-                                      bgcolor: 'var(--aura-outline)',
-                                    }}
-                                  />
-                                  <Stack
-                                    direction="row"
-                                    spacing={0.4}
-                                    sx={{ alignItems: 'center' }}
-                                  >
-                                    {renderMaterialIcon(paymentMethodIconMap[transaction.paymentMethod], {
-                                      sx: { fontSize: 14, color: 'var(--aura-on-surface-variant)' },
-                                    })}
-                                    <Typography
-                                      variant="body2"
-                                      sx={{ color: 'var(--aura-on-surface-variant)', fontSize: '13px' }}
-                                    >
-                                      {transaction.paymentMethodLabel}
-                                    </Typography>
-                                  </Stack>
-                                </Stack>
-                              </Box>
-
-                              <Typography
-                                sx={{
-                                  fontFamily: 'var(--aura-data-mono, JetBrains Mono, ui-monospace, monospace)',
-                                  color: isIncome ? 'var(--aura-secondary)' : 'var(--aura-on-surface)',
-                                  fontWeight: isIncome ? 600 : 500,
-                                }}
-                              >
-                                {formatMoney(transaction.money)}
-                              </Typography>
-                            </Stack>
-                          </ListItemButton>
-
-                          {index < group.transactions.length - 1 ? <Divider /> : null}
-                        </Box>
-                      )
-                    })}
-                  </List>
-                </Box>
-              ))
+              <Stack spacing={0}>
+                {filteredTransactions.map((transaction, index) => (
+                  <TransactionRow
+                    key={`${transaction.transactionDate}-${transaction.category}-${transaction.amount}-${index}`}
+                    transaction={transaction}
+                    withDivider={index < filteredTransactions.length - 1}
+                  />
+                ))}
+              </Stack>
             )}
           </Paper>
 
