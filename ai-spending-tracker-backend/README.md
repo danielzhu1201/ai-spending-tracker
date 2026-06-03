@@ -8,6 +8,15 @@ Minimal FastAPI backend for manual expense transactions.
 uv sync
 ```
 
+Create a local `.env` file with the Firebase service account path:
+
+```bash
+FIREBASE_CREDENTIALS_PATH=path/to/serviceAccountKey.json
+```
+
+Relative paths are resolved from the backend directory. Keep service account JSON
+files local and untracked.
+
 ## Run
 
 ```bash
@@ -15,6 +24,7 @@ uv run uvicorn main:app --reload
 ```
 
 The API runs at `http://127.0.0.1:8000` by default.
+Firebase Admin and Firestore are initialized during API startup.
 
 ## Sample Requests
 
