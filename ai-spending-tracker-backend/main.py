@@ -14,7 +14,6 @@ BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
 
-CurrencyCode = Literal["USD"]
 TransactionCategory = Literal[
     "food-dining",
     "housing",
@@ -28,7 +27,6 @@ TransactionCategory = Literal[
 
 class Transaction(BaseModel):
     amount: str
-    currency: CurrencyCode
     category: TransactionCategory
     transactionDate: str
     note: str

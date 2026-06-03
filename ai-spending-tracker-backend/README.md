@@ -41,7 +41,6 @@ curl -X POST http://127.0.0.1:8000/transactions \
   -H "Content-Type: application/json" \
   -d '{
     "amount": "42.50",
-    "currency": "USD",
     "category": "food-dining",
     "transactionDate": "2026-05-19",
     "note": "Dinner with colleagues"
@@ -53,7 +52,6 @@ The request body matches the frontend `ManualExpenseDraft` model:
 ```ts
 export interface ManualExpenseDraft {
   amount: string
-  currency: CurrencyCode
   category: TransactionCategory
   transactionDate: string
   note: string
