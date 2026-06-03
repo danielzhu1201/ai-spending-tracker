@@ -17,7 +17,7 @@ TransactionCategory = Literal[
 ]
 
 
-class ManualExpenseDraft(BaseModel):
+class Transaction(BaseModel):
     amount: str
     currency: CurrencyCode
     category: TransactionCategory
@@ -34,17 +34,16 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 
-transactions: list[ManualExpenseDraft] = [
+transactions: list[Transaction] = [
 ]
 
 
-@app.get("/transactions", response_model=list[ManualExpenseDraft])
-def get_transactions() -> list[ManualExpenseDraft]:
+@app.get("/transactions", response_model=list[Transaction])
+def get_transactions() -> list[Transaction]:
     return transactions
 
 
-@app.post("/transactions", response_model=ManualExpenseDraft, status_code=201)
-def create_transaction(transaction: ManualExpenseDraft) -> ManualExpenseDraft:
-    print(f"Received transaction: {transaction}")
+@app.post("/transactions", response_model=Transaction, status_code=201)
+def create_transaction(transaction: Transaction) -> Transaction:
     transactions.append(transaction)
     return transaction
