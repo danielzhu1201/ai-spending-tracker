@@ -78,10 +78,11 @@ transactions: list[Transaction] = [
 
 @app.get("/transactions", response_model=list[Transaction])
 def get_transactions() -> list[Transaction]:
-    return transactions
+    docs = app.state.firestore_db.collection("transactions").stream()
+    return [Transaction(**doc.to_dict()) for doc in docs]
 
 
 @app.post("/transactions", response_model=Transaction, status_code=201)
 def create_transaction(transaction: Transaction) -> Transaction:
-    transactions.append(transaction)
+    app.state.firestore_db.collection("transactions").add(transaction.dict())
     return transaction
