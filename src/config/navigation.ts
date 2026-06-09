@@ -26,6 +26,11 @@ export const mobileNavigationItems: NavigationItem[] = [
     icon: AddCircleRoundedIcon,
   },
   {
+    label: 'Scan',
+    path: '/scan',
+    icon: DocumentScannerRoundedIcon,
+  },
+  {
     label: 'Transactions',
     path: '/transactions',
     icon: ReceiptLongRoundedIcon,

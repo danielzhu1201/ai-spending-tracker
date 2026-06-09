@@ -2,6 +2,7 @@ import DocumentScannerRoundedIcon from "@mui/icons-material/DocumentScannerRound
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useNavigate } from "react-router-dom";
 
 import { PageContainer } from "../../components/layout/PageContainer";
 import { GlassCard } from "../../components/ui/GlassCard";
@@ -20,6 +21,8 @@ const currentMonthLabel = new Intl.DateTimeFormat("en-US", {
 }).format(new Date());
 
 export function SpendingDashboardPage() {
+  const navigate = useNavigate();
+
   return (
     <>
       <PageContainer>
@@ -104,7 +107,11 @@ export function SpendingDashboardPage() {
         </Stack>
       </PageContainer>
 
-      <PrimaryFab icon={<DocumentScannerRoundedIcon />} label="Scan Receipt" />
+      <PrimaryFab
+        icon={<DocumentScannerRoundedIcon />}
+        label="Scan Receipt"
+        onClick={() => navigate("/scan")}
+      />
     </>
   );
 }

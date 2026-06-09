@@ -5,8 +5,8 @@ import { SpendingDashboardPage } from '../pages/dashboard/SpendingDashboardPage'
 import { InsightsPage } from '../pages/insights/InsightsPage'
 import { LoginPage } from '../pages/login/LoginPage'
 import { ManualExpenseEntryPage } from '../pages/manual-entry/ManualExpenseEntryPage'
+import { ReceiptScanPage } from '../pages/scan/ReceiptScanPage'
 import { AllTransactionsPage } from '../pages/transactions/AllTransactionsPage'
-import { ComingSoonPage } from '../pages/shared/ComingSoonPage'
 
 export function AppRouter() {
   return (
@@ -48,10 +48,7 @@ export function AppRouter() {
         path="/scan"
         element={
           <ProtectedRoute>
-            <ComingSoonPage
-              screenLabel="AI Receipt Scan"
-              routeLabel="/scan"
-            />
+            <ReceiptScanPage />
           </ProtectedRoute>
         }
       />
