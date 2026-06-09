@@ -1,6 +1,6 @@
 # AI Spending Tracker Backend
 
-Minimal FastAPI backend for manual expense transactions.
+Minimal FastAPI backend for authenticated manual expense transactions backed by Firestore.
 
 ## Setup
 
@@ -28,10 +28,17 @@ Firebase Admin and Firestore are initialized during API startup.
 
 ## Sample Requests
 
+Both transaction endpoints require a Firebase ID token from a signed-in frontend user:
+
+```bash
+export FIREBASE_ID_TOKEN=<token>
+```
+
 ### GET `/transactions`
 
 ```bash
-curl http://127.0.0.1:8000/transactions
+curl http://127.0.0.1:8000/transactions \
+  -H "Authorization: Bearer $FIREBASE_ID_TOKEN"
 ```
 
 ### POST `/transactions`
@@ -39,6 +46,7 @@ curl http://127.0.0.1:8000/transactions
 ```bash
 curl -X POST http://127.0.0.1:8000/transactions \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $FIREBASE_ID_TOKEN" \
   -d '{
     "amount": "42.50",
     "category": "food-dining",

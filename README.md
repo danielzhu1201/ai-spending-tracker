@@ -1,16 +1,16 @@
 # AI Spending Tracker
 
-Aura Finance is a responsive spending tracker built with Vite, React, TypeScript, Material UI, Tailwind CSS, React Router, Firebase Authentication, FastAPI, and Firestore. The current branch adds real Firebase sign-in and user-scoped transaction persistence while keeping dashboard and insight screens backed by mock view models.
+Aura Finance is a responsive spending tracker built with Vite, React, TypeScript, Material UI, Tailwind CSS, React Router, Firebase Authentication, FastAPI, and Firestore. The current branch adds real Firebase sign-in, user-scoped transaction persistence, and a protected receipt-scan upload flow while keeping dashboard and insight screens backed by mock view models.
 
 ## What Is Implemented
 
 - `/login` - Firebase email/password and Google authentication, account creation, password reset, signed-in account details, and sign out.
 - Protected app routes - `/dashboard`, `/manual-entry`, `/transactions`, `/insights`, and `/scan` require an authenticated Firebase user.
 - `/manual-entry` - expense entry form with amount, category chips, MUI date picker, notes, and a Firebase-authenticated POST to the backend.
-- `/transactions` - Firebase-authenticated transaction loading from the backend, with search, category filters, and time filters.
+- `/transactions` - Firebase-authenticated transaction loading from the backend, with search, category filters, time filters, loading state, and error state.
+- `/scan` - protected receipt-image workflow with camera/file selection, image-only validation, preview, selected-file metadata, remove/reselect controls, and simulated upload completion.
 - Backend `/transactions` API - FastAPI endpoints verify Firebase ID tokens, write transactions to Firestore, and return only rows for the signed-in user's `uid`.
 - `/dashboard` and `/insights` - polished mock-data experiences for monthly spending and AI-style observations.
-- `/scan` - protected placeholder screen for future receipt scanning.
 
 The frontend sends Firebase ID tokens with API requests through `authenticatedFetch`. The backend validates those tokens with Firebase Admin and stores transactions in the Firestore `transactions` collection with a `uid` field.
 
@@ -118,7 +118,7 @@ git clone <your-repo-url>
 cd ai-spending-tracker
 cp .env.example .env
 cp ai-spending-tracker-backend/.env.example ai-spending-tracker-backend/.env
-# fill in Firebase values in both .env files before running the apps
+# fill in Firebase web app values in .env and FIREBASE_CREDENTIALS_PATH in the backend .env
 npm install
 npm run lint
 npm run build
@@ -146,6 +146,13 @@ The backend lives in `ai-spending-tracker-backend/`.
 
 - `GET /transactions` - requires `Authorization: Bearer <Firebase ID token>` and returns transactions for the signed-in user.
 - `POST /transactions` - requires the same bearer token and creates a Firestore transaction for the signed-in user.
+
+Example authenticated request:
+
+```bash
+curl http://127.0.0.1:8000/transactions \
+  -H "Authorization: Bearer $FIREBASE_ID_TOKEN"
+```
 
 Transaction request bodies match the frontend manual expense draft:
 
@@ -230,5 +237,5 @@ Most page data is still shaped through selectors before rendering. Transactions 
 - Manual expense submission posts to the backend, but success/error UI and form reset behavior are still minimal.
 - The frontend currently uses a hard-coded local backend URL: `http://127.0.0.1:8000/transactions`.
 - The backend supports transaction create/list only; there is no update/delete endpoint yet.
-- Scan Receipt, Ask Aura, Load More, and View All actions are UI-only.
-- `/scan` is intentionally represented by a coming-soon screen.
+- Receipt upload is currently simulated in the frontend; there is no backend receipt endpoint, storage integration, OCR, or transaction extraction yet.
+- Ask Aura, Load More, and View All actions are UI-only.
