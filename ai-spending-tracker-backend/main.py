@@ -4,9 +4,9 @@ from typing import Literal
 
 from dotenv import load_dotenv
 import firebase_admin
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from firebase_admin import credentials, firestore
+from firebase_admin import auth, credentials, firestore
 from pydantic import BaseModel
 
 
@@ -67,20 +67,67 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:5174"],
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 transactions: list[Transaction] = [
 ]
 
 
+def print_request_headers(endpoint: str, request: Request) -> None:
+    headers = dict(request.headers)
+    print(f"{endpoint} headers: {headers}")
+
+
+def get_request_uid(request: Request) -> str:
+    authorization = request.headers.get("authorization")
+
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing Authorization header.",
+        )
+
+    scheme, _, id_token = authorization.partition(" ")
+
+    if scheme.lower() != "bearer" or not id_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header must be a Bearer token.",
+        )
+
+    try:
+        decoded_token = auth.verify_id_token(id_token)
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Firebase ID token.",
+        ) from error
+
+    uid = decoded_token["uid"]
+    print(f"Decoded Firebase uid: {uid}")
+
+    return uid
+
+
 @app.get("/transactions", response_model=list[Transaction])
-def get_transactions() -> list[Transaction]:
-    docs = app.state.firestore_db.collection("transactions").stream()
+def get_transactions(request: Request) -> list[Transaction]:
+    # print_request_headers("GET /transactions", request)
+    uid = get_request_uid(request)
+    docs = (
+        app.state.firestore_db.collection("transactions")
+        .where("uid", "==", uid)
+        .stream()
+    )
     return [Transaction(**doc.to_dict()) for doc in docs]
 
 
 @app.post("/transactions", response_model=Transaction, status_code=201)
-def create_transaction(transaction: Transaction) -> Transaction:
-    app.state.firestore_db.collection("transactions").add(transaction.dict())
+def create_transaction(request: Request, transaction: Transaction) -> Transaction:
+    # print_request_headers("POST /transactions", request)
+    uid = get_request_uid(request)
+    app.state.firestore_db.collection("transactions").add({
+        **transaction.dict(),
+        "uid": uid,
+    })
     return transaction

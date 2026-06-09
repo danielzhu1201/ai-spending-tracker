@@ -12,6 +12,7 @@ import { PageContainer } from "../../components/layout/PageContainer";
 import { TransactionRow } from "../../components/transactions/TransactionRow";
 import { FilterChip } from "../../components/ui/FilterChip";
 import { selectTransactionsPageViewModel } from "../../data/selectors/transactionsSelectors";
+import { authenticatedFetch } from "../../lib/authenticatedFetch";
 import type { TransactionCategory, TransactionInfo } from "../../types/domain";
 import { formatMoney } from "../../utils/formatters";
 import {
@@ -89,7 +90,7 @@ export function AllTransactionsPage() {
         setIsLoadingTransactions(true);
         setTransactionsError(null);
 
-        const response = await fetch(transactionsEndpoint, {
+        const response = await authenticatedFetch(transactionsEndpoint, {
           signal: abortController.signal,
         });
 
