@@ -1,16 +1,18 @@
 # AI Spending Tracker
 
-Aura Finance is a responsive spending-tracker UI built with Vite, React, TypeScript, Material UI, Tailwind CSS, and React Router. The current branch replaces the starter app with a mock-data fintech experience for reviewing spending, entering expenses, browsing transactions, and reading AI-style spending insights.
+Aura Finance is a responsive spending tracker built with Vite, React, TypeScript, Material UI, Tailwind CSS, React Router, Firebase Authentication, FastAPI, and Firestore. The current branch adds real Firebase sign-in and user-scoped transaction persistence while keeping dashboard and insight screens backed by mock view models.
 
 ## What Is Implemented
 
-- `/dashboard` - monthly spending dashboard with summary metrics, comparison bars, recent transactions, and a scan-receipt action.
-- `/manual-entry` - expense entry form with amount, category chips, MUI date picker, notes, and a contextual spending tip.
-- `/transactions` - searchable and filterable transaction list grouped by date, with category and payment-method metadata.
-- `/insights` - Smart Insights page with range tabs and observation cards.
-- `/scan` and `/login` - placeholder screens for future receipt scanning and authentication flows.
+- `/login` - Firebase email/password and Google authentication, account creation, password reset, signed-in account details, and sign out.
+- Protected app routes - `/dashboard`, `/manual-entry`, `/transactions`, `/insights`, and `/scan` require an authenticated Firebase user.
+- `/manual-entry` - expense entry form with amount, category chips, MUI date picker, notes, and a Firebase-authenticated POST to the backend.
+- `/transactions` - Firebase-authenticated transaction loading from the backend, with search, category filters, and time filters.
+- Backend `/transactions` API - FastAPI endpoints verify Firebase ID tokens, write transactions to Firestore, and return only rows for the signed-in user's `uid`.
+- `/dashboard` and `/insights` - polished mock-data experiences for monthly spending and AI-style observations.
+- `/scan` - protected placeholder screen for future receipt scanning.
 
-The app currently runs entirely from mock API responses and selectors in `src/data`. There is no backend, authentication, persistence, or real receipt scanning yet.
+The frontend sends Firebase ID tokens with API requests through `authenticatedFetch`. The backend validates those tokens with Firebase Admin and stores transactions in the Firestore `transactions` collection with a `uid` field.
 
 ## Tech Stack
 
@@ -19,6 +21,8 @@ The app currently runs entirely from mock API responses and selectors in `src/da
 - React Router 7
 - Material UI 9, MUI X Date Pickers, Emotion
 - Tailwind CSS 4 through `@tailwindcss/vite`
+- Firebase JS SDK for frontend authentication
+- FastAPI backend with Firebase Admin, Firestore, and `uv`
 - Day.js for date picker values
 - ESLint for static checks
 
@@ -26,22 +30,69 @@ The app currently runs entirely from mock API responses and selectors in `src/da
 
 - Node.js `22.13+` or `24+`
 - npm `10+`
+- Python `3.11+`
+- `uv`
+- A Firebase project with Authentication and Firestore enabled
+- A Firebase service account JSON file for the backend
 
 ## Getting Started
 
-### Quick Start (Node Already Installed)
+### Frontend Environment
+
+Copy the frontend example environment file and fill in your Firebase web app values:
+
+```bash
+cp .env.example .env
+```
+
+Required values:
+
+```bash
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+```
+
+### Backend Environment
+
+Create the backend environment file and point it at your local service account JSON:
+
+```bash
+cp ai-spending-tracker-backend/.env.example ai-spending-tracker-backend/.env
+```
+
+```bash
+FIREBASE_CREDENTIALS_PATH=path/to/serviceAccountKey.json
+```
+
+Relative paths are resolved from `ai-spending-tracker-backend`. Keep service account JSON files local and untracked.
+
+### Run the Backend
+
+```bash
+cd ai-spending-tracker-backend
+uv sync
+uv run uvicorn main:app --reload
+```
+
+The API starts at `http://127.0.0.1:8000`. Interactive docs are available at `http://127.0.0.1:8000/docs`.
+
+### Run the Frontend
 
 ```bash
 npm install
 npm run dev
 ```
 
-The Vite dev server starts at `http://localhost:5173` by default.
+The Vite dev server starts at `http://localhost:5173` by default. Use the `localhost` URL when talking to the backend because the current backend CORS allow-list is configured for `http://localhost:5173` and `http://localhost:5174`.
 
-To run on an explicit host and port:
+To run on an explicit host and port that matches backend CORS:
 
 ```bash
-npm run dev -- --host 127.0.0.1 --port 5173
+npm run dev -- --host localhost --port 5173
 ```
 
 ### Codex Prompt (Brand-New Machine)
@@ -49,10 +100,13 @@ npm run dev -- --host 127.0.0.1 --port 5173
 ```text
 Set up and run this project on a brand-new local machine with nothing installed.
 1) Detect the OS (macOS, Ubuntu/Debian Linux, or Windows).
-2) Install Git and Node.js LTS (with npm) using the OS-native package manager.
-3) Clone the repository, enter the project folder, and install dependencies.
-4) Validate with lint and build.
-5) Start the dev server on 127.0.0.1:5173.
+2) Install Git, Node.js LTS with npm, Python 3.11+, and uv using OS-native package managers where possible.
+3) Clone the repository and enter the project folder.
+4) Create .env from .env.example and ai-spending-tracker-backend/.env from its example.
+5) Prompt me for Firebase web app config values and the backend service account JSON path.
+6) Install frontend and backend dependencies.
+7) Validate with frontend lint/build and a backend import/startup check.
+8) Start the backend on 127.0.0.1:8000 and the frontend on localhost:5173.
 Print each command before running it and stop on errors with a fix suggestion.
 ```
 
@@ -62,10 +116,21 @@ Print each command before running it and stop on errors with a fix suggestion.
 # after Git + Node.js LTS are installed
 git clone <your-repo-url>
 cd ai-spending-tracker
+cp .env.example .env
+cp ai-spending-tracker-backend/.env.example ai-spending-tracker-backend/.env
+# fill in Firebase values in both .env files before running the apps
 npm install
 npm run lint
 npm run build
-npm run dev -- --host 127.0.0.1 --port 5173
+
+# terminal 1: backend
+cd ai-spending-tracker-backend
+uv sync
+uv run uvicorn main:app --reload
+
+# terminal 2: frontend, from the repository root
+cd ..
+npm run dev -- --host localhost --port 5173
 ```
 
 ## Available Scripts
@@ -74,6 +139,26 @@ npm run dev -- --host 127.0.0.1 --port 5173
 - `npm run build` - type-check and build the production bundle.
 - `npm run preview` - preview the production build.
 - `npm run lint` - run ESLint.
+
+## Backend API
+
+The backend lives in `ai-spending-tracker-backend/`.
+
+- `GET /transactions` - requires `Authorization: Bearer <Firebase ID token>` and returns transactions for the signed-in user.
+- `POST /transactions` - requires the same bearer token and creates a Firestore transaction for the signed-in user.
+
+Transaction request bodies match the frontend manual expense draft:
+
+```ts
+export interface ManualExpenseDraft {
+  amount: string
+  category: TransactionCategory
+  transactionDate: string
+  note: string
+}
+```
+
+See `ai-spending-tracker-backend/README.md` for backend-specific setup and curl examples.
 
 ## Codex + Vite Initialization
 
@@ -110,31 +195,40 @@ npm run dev -- --host 127.0.0.1 --port 5173
 - Enable Tailwind via `@tailwindcss/vite` in `vite.config.ts`.
 - Import Tailwind in `src/index.css` using `@import "tailwindcss";`.
 - Wrap the app with `AppThemeProvider` in `src/main.tsx` to apply the Aura MUI theme and CSS variables.
-- Confirm the app boots at `http://127.0.0.1:5173/`.
+- Confirm the app boots at `http://localhost:5173/`.
 
 ## Project Structure
 
 ```text
 src/
   app/              React Router route definitions
+  auth/             Firebase auth context and protected route wrapper
   components/       Shared layout, UI, form, icon, and transaction components
   config/           Navigation and layout configuration
   data/mock/        Mock API response data for each screen
   data/selectors/   View-model selectors that shape mock data for pages
+  lib/              Firebase initialization and authenticated fetch helper
   pages/            Route-level screen implementations
   theme/            Aura design tokens, MUI theme, and CSS variables
   types/            Shared domain types
   utils/            Formatting and class-name helpers
+
+ai-spending-tracker-backend/
+  main.py           FastAPI app, Firebase token verification, Firestore access
+  pyproject.toml    Backend dependencies managed by uv
 ```
 
 ## UI Notes
 
 The visual system is centralized in `src/theme/auraTokens.ts` and `src/theme/auraTheme.ts`. `AppThemeProvider` applies the MUI theme, CSS baseline, and Aura CSS variables globally. Shared layout components provide the top app bar, responsive page container, desktop side navigation, and mobile bottom navigation.
 
-Most page data is shaped through selectors before rendering. This keeps the current mock implementation close to an API-backed flow and should make future integration work more straightforward.
+Most page data is still shaped through selectors before rendering. Transactions now enter the app through the backend, then flow through the same selector layer used by the earlier mock implementation.
 
 ## Current Limitations
 
-- Transaction filters and manual expense entry update local component state only.
-- Add Expense, Scan Receipt, Ask Aura, Load More, and View All actions are UI-only.
-- `/scan` and `/login` are intentionally represented by coming-soon screens.
+- Dashboard and insights still use mock data.
+- Manual expense submission posts to the backend, but success/error UI and form reset behavior are still minimal.
+- The frontend currently uses a hard-coded local backend URL: `http://127.0.0.1:8000/transactions`.
+- The backend supports transaction create/list only; there is no update/delete endpoint yet.
+- Scan Receipt, Ask Aura, Load More, and View All actions are UI-only.
+- `/scan` is intentionally represented by a coming-soon screen.
