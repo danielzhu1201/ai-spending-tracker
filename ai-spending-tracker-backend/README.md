@@ -8,10 +8,12 @@ Minimal FastAPI backend for authenticated manual expense transactions backed by 
 uv sync
 ```
 
-Create a local `.env` file with the Firebase service account path:
+Create a local `.env` file with the Firebase service account path and Google
+GenAI API key:
 
 ```bash
 FIREBASE_CREDENTIALS_PATH=path/to/serviceAccountKey.json
+GEMINI_API_KEY=your_google_genai_api_key
 ```
 
 Relative paths are resolved from the backend directory. Keep service account JSON
@@ -67,3 +69,13 @@ export interface ManualExpenseDraft {
 ```
 
 Interactive docs are available at `http://127.0.0.1:8000/docs`.
+
+### POST `/ai/answer`
+
+```bash
+curl -X POST http://127.0.0.1:8000/ai/answer \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Give me one budgeting tip for this week."
+  }'
+```

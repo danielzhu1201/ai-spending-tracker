@@ -7,6 +7,7 @@ import firebase_admin
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from firebase_admin import auth, credentials, firestore
+from google import genai
 from pydantic import BaseModel
 
 
@@ -30,6 +31,15 @@ class Transaction(BaseModel):
     category: TransactionCategory
     transactionDate: str
     note: str
+
+
+class PromptRequest(BaseModel):
+    prompt: str
+    model: str = "gemini-3.5-flash"
+
+
+class PromptResponse(BaseModel):
+    answer: str
 
 
 def get_firebase_credentials_path() -> Path:
@@ -60,8 +70,21 @@ def initialize_firestore():
     return firestore.client()
 
 
+def initialize_genai_client():
+    api_key = os.getenv("GEMINI_API_KEY")
+
+    if not api_key:
+        raise RuntimeError(
+            "GEMINI_API_KEY is not set. Add it to "
+            "ai-spending-tracker-backend/.env."
+        )
+
+    return genai.Client(api_key=api_key)
+
+
 app = FastAPI(title="AI Spending Tracker API")
 app.state.firestore_db = initialize_firestore()
+app.state.genai_client = initialize_genai_client()
 
 app.add_middleware(
     CORSMiddleware,
@@ -120,6 +143,30 @@ def get_transactions(request: Request) -> list[Transaction]:
         .stream()
     )
     return [Transaction(**doc.to_dict()) for doc in docs]
+
+
+@app.post("/ai/answer", response_model=PromptResponse)
+def answer_prompt(prompt_request: PromptRequest) -> PromptResponse:
+    prompt = prompt_request.prompt.strip()
+
+    if not prompt:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Prompt must not be empty.",
+        )
+
+    try:
+        interaction = app.state.genai_client.interactions.create(
+            model=prompt_request.model,
+            input=prompt,
+        )
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to generate AI response.",
+        ) from error
+
+    return PromptResponse(answer=interaction.output_text or "")
 
 
 @app.post("/transactions", response_model=Transaction, status_code=201)
