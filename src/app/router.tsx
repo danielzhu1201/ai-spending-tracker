@@ -1,12 +1,12 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from "react-router-dom";
 
-import { ProtectedRoute } from '../auth/ProtectedRoute'
-import { SpendingDashboardPage } from '../pages/dashboard/SpendingDashboardPage'
-import { InsightsPage } from '../pages/insights/InsightsPage'
-import { LoginPage } from '../pages/login/LoginPage'
-import { ManualExpenseEntryPage } from '../pages/manual-entry/ManualExpenseEntryPage'
-import { ReceiptScanPage } from '../pages/scan/ReceiptScanPage'
-import { AllTransactionsPage } from '../pages/transactions/AllTransactionsPage'
+import { ProtectedRoute } from "../auth/ProtectedRoute";
+import { SpendingDashboardPage } from "../pages/dashboard/SpendingDashboardPage";
+import { InsightsPage } from "../pages/insights/InsightsPage";
+import { LoginPage } from "../pages/login/LoginPage";
+import { ManualExpenseEntryPage } from "../pages/manual-entry/ManualExpenseEntryPage";
+import { ReceiptScanPage } from "../pages/scan/ReceiptScanPage";
+import { AllTransactionsPage } from "../pages/transactions/AllTransactionsPage";
 
 export function AppRouter() {
   return (
@@ -54,5 +54,5 @@ export function AppRouter() {
       />
       <Route path="/login" element={<LoginPage />} />
     </Routes>
-  )
+  );
 }
