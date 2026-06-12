@@ -10,15 +10,17 @@ interface LabeledInputProps extends Omit<TextFieldProps, 'label'> {
 export function LabeledInput({ label, ...props }: LabeledInputProps) {
   return (
     <Stack spacing={1}>
-      <Typography
-        variant="caption"
-        sx={{
-          color: 'var(--aura-on-surface-variant)',
-          letterSpacing: '0.08em',
-        }}
-      >
-        {label}
-      </Typography>
+      {label && (
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'var(--aura-on-surface-variant)',
+            letterSpacing: '0.08em',
+          }}
+        >
+          {label}
+        </Typography>
+      )}
       <TextField
         size="small"
         {...props}

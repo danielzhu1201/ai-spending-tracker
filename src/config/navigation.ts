@@ -35,6 +35,11 @@ export const mobileNavigationItems: NavigationItem[] = [
     path: '/insights',
     icon: AnalyticsRoundedIcon,
   },
+  {
+    label: 'Account',
+    path: '/login',
+    icon: PersonRoundedIcon,
+  },
 ]
 
 export const desktopTransactionsNavigationItems: NavigationItem[] = [

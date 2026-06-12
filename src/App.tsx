@@ -1,6 +1,7 @@
 import { BrowserRouter } from 'react-router-dom'
 
 import { AppRouter } from './app/router'
+import { AuthProvider } from './auth/AuthProvider'
 import { AppTopBar } from './components/layout/AppTopBar'
 import { MobileBottomNav } from './components/layout/MobileBottomNav'
 import { mobileNavigationItems } from './config/navigation'
@@ -8,9 +9,11 @@ import { mobileNavigationItems } from './config/navigation'
 function App() {
   return (
     <BrowserRouter>
-      <AppTopBar title="Aura Finance" />
-      <AppRouter />
-      <MobileBottomNav items={mobileNavigationItems} />
+      <AuthProvider>
+        <AppTopBar title="Aura Finance" />
+        <AppRouter />
+        <MobileBottomNav items={mobileNavigationItems} />
+      </AuthProvider>
     </BrowserRouter>
   )
 }

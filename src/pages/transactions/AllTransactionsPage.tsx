@@ -5,14 +5,14 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { renderMaterialIcon } from "../../components/icons/materialIconMap";
 import { PageContainer } from "../../components/layout/PageContainer";
 import { TransactionRow } from "../../components/transactions/TransactionRow";
 import { FilterChip } from "../../components/ui/FilterChip";
-import { transactionsApiResponseMock } from "../../data/mock/transactionsApi";
 import { selectTransactionsPageViewModel } from "../../data/selectors/transactionsSelectors";
+import { authenticatedFetch } from "../../lib/authenticatedFetch";
 import type { TransactionCategory, TransactionInfo } from "../../types/domain";
 import { formatMoney } from "../../utils/formatters";
 import {
@@ -20,7 +20,7 @@ import {
   toManualExpenseMoney,
 } from "../../utils/manualExpense";
 
-const viewModel = selectTransactionsPageViewModel(transactionsApiResponseMock);
+const transactionsEndpoint = "http://127.0.0.1:8000/transactions";
 
 type TransactionTimeFilter = "this-week" | "this-month" | "last-3-months";
 
@@ -69,6 +69,11 @@ function startOfLastThreeMonths(date: Date): Date {
 }
 
 export function AllTransactionsPage() {
+  const [transactions, setTransactions] = useState<TransactionInfo[]>([]);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
+  const [transactionsError, setTransactionsError] = useState<string | null>(
+    null,
+  );
   const [query, setQuery] = useState("");
   const [selectedTimeValue, setSelectedTimeValue] = useState(
     timeFilters.find((filter) => filter.selected)?.value ??
@@ -76,6 +81,53 @@ export function AllTransactionsPage() {
   );
   const [selectedCategoryValue, setSelectedCategoryValue] =
     useState<TransactionCategory | null>(null);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    async function loadTransactions() {
+      try {
+        setIsLoadingTransactions(true);
+        setTransactionsError(null);
+
+        const response = await authenticatedFetch(transactionsEndpoint, {
+          signal: abortController.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Transactions request failed: ${response.status}`);
+        }
+
+        const data = (await response.json()) as TransactionInfo[];
+        setTransactions(data);
+      } catch (error) {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        setTransactionsError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load transactions.",
+        );
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsLoadingTransactions(false);
+        }
+      }
+    }
+
+    void loadTransactions();
+
+    return () => {
+      abortController.abort();
+    };
+  }, []);
+
+  const viewModel = useMemo(
+    () => selectTransactionsPageViewModel(transactions),
+    [transactions],
+  );
 
   const categoryFilters = useMemo(() => {
     const categories = Array.from(
@@ -94,7 +146,7 @@ export function AllTransactionsPage() {
         icon: categoryDisplay.icon,
       };
     });
-  }, []);
+  }, [viewModel.transactions]);
 
   const filteredTransactions = useMemo(() => {
     const today = startOfDay(new Date());
@@ -154,7 +206,7 @@ export function AllTransactionsPage() {
 
       return searchableText.includes(queryLower);
     });
-  }, [query, selectedCategoryValue, selectedTimeValue]);
+  }, [query, selectedCategoryValue, selectedTimeValue, viewModel.transactions]);
 
   return (
     <>
@@ -251,7 +303,31 @@ export function AllTransactionsPage() {
               borderColor: "var(--aura-outline-variant)",
             }}
           >
-            {filteredTransactions.length === 0 ? (
+            {isLoadingTransactions ? (
+              <Stack spacing={1} sx={{ p: 3 }}>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "var(--aura-primary)" }}
+                >
+                  Loading transactions
+                </Typography>
+              </Stack>
+            ) : transactionsError ? (
+              <Stack spacing={1} sx={{ p: 3 }}>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "var(--aura-primary)" }}
+                >
+                  Unable to load transactions
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "var(--aura-on-surface-variant)" }}
+                >
+                  {transactionsError}
+                </Typography>
+              </Stack>
+            ) : filteredTransactions.length === 0 ? (
               <Stack spacing={1} sx={{ p: 3 }}>
                 <Typography
                   variant="body1"

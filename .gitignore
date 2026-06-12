@@ -11,6 +11,7 @@ coverage/
 .env
 .env.*
 !.env.example
+ai-spending-tracker-backend/*firebase-adminsdk*.json
 
 # logs
 logs
