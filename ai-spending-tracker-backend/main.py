@@ -9,7 +9,7 @@ from fastapi import FastAPI, File, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from firebase_admin import auth, credentials, firestore
 from google import genai
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -17,6 +17,7 @@ load_dotenv(BASE_DIR / ".env")
 
 
 TransactionCategory = Literal[
+    "",
     "food-dining",
     "housing",
     "shopping",
@@ -28,10 +29,37 @@ TransactionCategory = Literal[
 
 
 class Transaction(BaseModel):
-    amount: str
-    category: TransactionCategory
-    transactionDate: str
-    note: str
+    amount: str = Field(
+        description=(
+            "The receipt total as a positive decimal string with no currency "
+            "symbol, for example '63.47'. Return an empty string if the total "
+            "is missing, illegible, or uncertain."
+        )
+    )
+    category: TransactionCategory = Field(
+        description=(
+            "The best spending category for the receipt. Use food-dining for "
+            "restaurants or groceries, shopping for retail purchases, transport "
+            "for gas/rides/transit, utilities for bills, housing for rent or "
+            "home expenses, and other when no category clearly fits. Return an "
+            "empty string if there is not enough legible evidence to choose a "
+            "category confidently."
+        )
+    )
+    transactionDate: str = Field(
+        description=(
+            "The purchase date from the receipt in YYYY-MM-DD format. Return "
+            "an empty string if the date is missing, illegible, incomplete, or "
+            "uncertain."
+        )
+    )
+    note: str = Field(
+        description=(
+            "A short human-readable note for the transaction, preferably the "
+            "merchant name plus useful receipt context. Return an empty string "
+            "if the merchant or context is missing, illegible, or uncertain."
+        )
+    )
 
 
 class PromptRequest(BaseModel):
@@ -146,30 +174,6 @@ def get_transactions(request: Request) -> list[Transaction]:
     return [Transaction(**doc.to_dict()) for doc in docs]
 
 
-@app.post("/ai/answer", response_model=PromptResponse)
-def answer_prompt(prompt_request: PromptRequest) -> PromptResponse:
-    prompt = prompt_request.prompt.strip()
-
-    if not prompt:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Prompt must not be empty.",
-        )
-
-    try:
-        interaction = app.state.genai_client.interactions.create(
-            model=prompt_request.model,
-            input=prompt,
-        )
-    except Exception as error:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Failed to generate AI response.",
-        ) from error
-
-    return PromptResponse(answer=interaction.output_text or "")
-
-
 @app.post("/receipts/upload", response_model=Transaction)
 async def upload_receipt(
     request: Request,
@@ -191,18 +195,59 @@ async def upload_receipt(
         )
 
     image_bytes = await receipt.read()
+    if not image_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Receipt image must not be empty.",
+        )
+
     image_base64 = base64.b64encode(image_bytes).decode("utf-8")
 
     print(f"Received receipt upload: filename={receipt.filename}, "
           f"content_type={receipt.content_type}, size={len(image_bytes)} bytes")
     print(f"Base64-encoded image size: {len(image_base64)} characters")
 
-    return Transaction(
-        amount="63.47",
-        category="shopping",
-        transactionDate="2026-06-11",
-        note="Costco receipt",
-    )
+    prompt = """
+Parse this receipt image into one spending transaction.
+Return only JSON that matches the Transaction schema.
+Prioritize accuracy over completeness.
+Do not guess, infer aggressively, or fill fields from weak evidence.
+Use the final receipt total for amount only when it is clearly legible.
+Use YYYY-MM-DD for transactionDate only when a complete date is clearly legible.
+Use a concise note based on the merchant and receipt context only when clearly legible.
+For any field that is missing, illegible, incomplete, ambiguous, or uncertain, return an empty string for that field.
+""".strip()
+
+    try:
+        interaction = app.state.genai_client.interactions.create(
+            model="gemini-3.1-flash-lite",
+            input=[
+                {"type": "text", "text": prompt},
+                {
+                    "type": "image",
+                    "data": image_base64,
+                    "mime_type": receipt.content_type,
+                },
+            ],
+            response_format={
+                "type": "text",
+                "mime_type": "application/json",
+                "schema": Transaction.model_json_schema(),
+            }
+        )
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to extract transaction from receipt image.",
+        ) from error
+
+    try:
+        return Transaction.model_validate_json(interaction.output_text or "")
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Receipt extraction returned invalid transaction data.",
+        ) from error
 
 
 @app.post("/transactions", response_model=Transaction, status_code=201)

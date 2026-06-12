@@ -21,6 +21,7 @@ export interface InsightCard {
 }
 
 export type TransactionCategory =
+  | ''
   | 'food-dining'
   | 'housing'
   | 'shopping'

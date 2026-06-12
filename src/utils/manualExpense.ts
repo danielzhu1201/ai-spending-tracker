@@ -1,6 +1,13 @@
 import type { MoneyValue, TransactionCategory, TransactionInfo } from '../types/domain'
 
-const categoryDisplayMap: Record<TransactionCategory, { label: string; icon: string }> = {
+const categoryDisplayMap: Record<
+  TransactionCategory,
+  { label: string; icon: string }
+> = {
+  '': {
+    label: 'Uncategorized',
+    icon: 'more_horiz',
+  },
   'food-dining': {
     label: 'Food & Dining',
     icon: 'restaurant',
