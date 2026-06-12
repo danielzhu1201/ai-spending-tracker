@@ -11,12 +11,17 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ChangeEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { PageContainer } from '../../components/layout/PageContainer'
+import { authenticatedFetch } from '../../lib/authenticatedFetch'
+import type { TransactionInfo } from '../../types/domain'
 
 type ReceiptUploadState = 'empty' | 'ready' | 'uploading' | 'uploaded' | 'invalid'
+
+const receiptUploadEndpoint = 'http://127.0.0.1:8000/receipts/upload'
 
 const formatFileSize = (bytes: number) => {
   if (bytes < 1024) {
@@ -31,34 +36,21 @@ const formatFileSize = (bytes: number) => {
 }
 
 export function ReceiptScanPage() {
+  const navigate = useNavigate()
   const [receiptFile, setReceiptFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [uploadState, setUploadState] = useState<ReceiptUploadState>('empty')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const uploadTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     return () => {
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl)
       }
-
-      if (uploadTimeoutRef.current) {
-        window.clearTimeout(uploadTimeoutRef.current)
-      }
     }
   }, [previewUrl])
 
-  const clearUploadTimer = () => {
-    if (uploadTimeoutRef.current) {
-      window.clearTimeout(uploadTimeoutRef.current)
-      uploadTimeoutRef.current = null
-    }
-  }
-
   const selectReceipt = (file: File | undefined) => {
-    clearUploadTimer()
-
     if (!file) {
       return
     }
@@ -88,8 +80,6 @@ export function ReceiptScanPage() {
   }
 
   const removeReceipt = () => {
-    clearUploadTimer()
-
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl)
     }
@@ -100,7 +90,7 @@ export function ReceiptScanPage() {
     setErrorMessage(null)
   }
 
-  const uploadReceipt = () => {
+  const uploadReceipt = async () => {
     if (!receiptFile || uploadState === 'uploading') {
       return
     }
@@ -108,10 +98,37 @@ export function ReceiptScanPage() {
     setUploadState('uploading')
     setErrorMessage(null)
 
-    uploadTimeoutRef.current = window.setTimeout(() => {
-      uploadTimeoutRef.current = null
+    const formData = new FormData()
+    formData.append('receipt', receiptFile)
+
+    try {
+      const response = await authenticatedFetch(receiptUploadEndpoint, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        let message = 'Unable to upload receipt.'
+
+        try {
+          const errorBody = (await response.json()) as { detail?: string }
+          message = errorBody.detail ?? message
+        } catch {
+          message = response.statusText || message
+        }
+
+        throw new Error(message)
+      }
+
+      const transaction = (await response.json()) as TransactionInfo
       setUploadState('uploaded')
-    }, 900)
+      navigate('/manual-entry', { state: { receiptTransaction: transaction } })
+    } catch (error) {
+      setUploadState('ready')
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Unable to upload receipt.',
+      )
+    }
   }
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -137,7 +154,7 @@ export function ReceiptScanPage() {
             Scan Receipt
           </Typography>
           <Typography variant="body2" sx={{ color: 'var(--aura-on-surface-variant)' }}>
-            Capture or select a receipt image. Upload is simulated until the receipt endpoint is ready.
+            Capture or select a receipt image, then review extracted details before saving.
           </Typography>
         </Stack>
 

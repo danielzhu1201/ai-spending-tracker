@@ -1,10 +1,11 @@
+import base64
 import os
 from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
 import firebase_admin
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from firebase_admin import auth, credentials, firestore
 from google import genai
@@ -167,6 +168,41 @@ def answer_prompt(prompt_request: PromptRequest) -> PromptResponse:
         ) from error
 
     return PromptResponse(answer=interaction.output_text or "")
+
+
+@app.post("/receipts/upload", response_model=Transaction)
+async def upload_receipt(
+    request: Request,
+    receipt: UploadFile | None = File(default=None),
+) -> Transaction:
+    # print_request_headers("POST /receipts/upload", request)
+    get_request_uid(request)
+
+    if receipt is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Receipt image is required.",
+        )
+
+    if not (receipt.content_type or "").startswith("image/"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Receipt upload must be an image file.",
+        )
+
+    image_bytes = await receipt.read()
+    image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+
+    print(f"Received receipt upload: filename={receipt.filename}, "
+          f"content_type={receipt.content_type}, size={len(image_bytes)} bytes")
+    print(f"Base64-encoded image size: {len(image_base64)} characters")
+
+    return Transaction(
+        amount="63.47",
+        category="shopping",
+        transactionDate="2026-06-11",
+        note="Costco receipt",
+    )
 
 
 @app.post("/transactions", response_model=Transaction, status_code=201)

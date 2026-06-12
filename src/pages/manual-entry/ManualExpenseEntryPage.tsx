@@ -12,6 +12,7 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
+import { useLocation } from 'react-router-dom'
 
 import { CategoryChipGroup } from '../../components/forms/CategoryChipGroup'
 import { LabeledInput } from '../../components/forms/LabeledInput'
@@ -22,12 +23,21 @@ import {
   manualExpenseTipMock,
 } from '../../data/mock/futureScreens'
 import { authenticatedFetch } from '../../lib/authenticatedFetch'
-import type { TransactionCategory } from '../../types/domain'
+import type { TransactionCategory, TransactionInfo } from '../../types/domain'
 
 const transactionsEndpoint = 'http://127.0.0.1:8000/transactions'
 
+interface ManualEntryLocationState {
+  receiptTransaction?: TransactionInfo
+}
+
 export function ManualExpenseEntryPage() {
-  const [draft, setDraft] = useState(manualExpenseDraftMock)
+  const location = useLocation()
+  const receiptTransaction = (location.state as ManualEntryLocationState | null)
+    ?.receiptTransaction
+  const [draft, setDraft] = useState<TransactionInfo>(
+    () => receiptTransaction ?? manualExpenseDraftMock,
+  )
 
   const amountPlaceholder = useMemo(
     () => (draft.amount.length > 0 ? undefined : '0.00'),
