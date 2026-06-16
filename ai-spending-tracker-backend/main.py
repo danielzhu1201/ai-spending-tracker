@@ -1,6 +1,9 @@
 import base64
+import json
 import os
+from datetime import date, datetime, timedelta
 from pathlib import Path
+from time import time
 from typing import Literal
 
 from dotenv import load_dotenv
@@ -26,6 +29,9 @@ TransactionCategory = Literal[
     "utilities",
     "other",
 ]
+InsightRange = Literal["weekly", "monthly", "yearly"]
+TrendDirection = Literal["up", "down", "flat"]
+TrendUnit = Literal["percent", "amount"]
 
 
 class Transaction(BaseModel):
@@ -60,6 +66,26 @@ class Transaction(BaseModel):
             "if the merchant or context is missing, illegible, or uncertain."
         )
     )
+
+
+class InsightTrend(BaseModel):
+    value: float
+    direction: TrendDirection
+    period: str
+    unit: TrendUnit
+
+
+class InsightCard(BaseModel):
+    id: str
+    title: str
+    description: str
+    icon: str
+    trend: InsightTrend
+
+
+class InsightAnalysisResponse(BaseModel):
+    insights: list[InsightCard]
+
 
 def get_firebase_credentials_path() -> Path:
     credentials_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
@@ -104,6 +130,7 @@ def initialize_genai_client():
 app = FastAPI(title="AI Spending Tracker API")
 app.state.firestore_db = initialize_firestore()
 app.state.genai_client = initialize_genai_client()
+app.state.insights_cache = {}
 
 app.add_middleware(
     CORSMiddleware,
@@ -113,6 +140,31 @@ app.add_middleware(
 )
 
 transactions: list[Transaction] = [
+]
+
+INSIGHTS_CACHE_TTL_SECONDS = 24 * 60 * 60
+MAX_INSIGHTS = 3
+MIN_TRANSACTIONS_FOR_INSIGHTS = 3
+GEMINI_MODEL = "gemini-3.1-flash-lite"
+INSIGHT_ICON_NAMES = [
+    "restaurant",
+    "home",
+    "payments",
+    "shopping_bag",
+    "local_cafe",
+    "commute",
+    "directions_car",
+    "contactless",
+    "credit_card",
+    "account_balance",
+    "autorenew",
+    "more_horiz",
+    "auto_awesome",
+    "lightbulb",
+    "pie_chart",
+    "savings",
+    "subscriptions",
+    "trending_up",
 ]
 
 
@@ -152,16 +204,185 @@ def get_request_uid(request: Request) -> str:
     return uid
 
 
-@app.get("/transactions", response_model=list[Transaction])
-def get_transactions(request: Request) -> list[Transaction]:
-    # print_request_headers("GET /transactions", request)
-    uid = get_request_uid(request)
+def get_current_period_interval(range: InsightRange) -> tuple[date, date]:
+    today = date.today()
+
+    if range == "weekly":
+        return today - timedelta(days=today.weekday()), today
+
+    if range == "monthly":
+        return today.replace(day=1), today
+
+    return today.replace(month=1, day=1), today
+
+
+def parse_transaction_date(transaction_date: str) -> date | None:
+    try:
+        return datetime.strptime(transaction_date, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def get_user_transactions(uid: str) -> list[Transaction]:
     docs = (
         app.state.firestore_db.collection("transactions")
         .where("uid", "==", uid)
         .stream()
     )
-    return [Transaction(**doc.to_dict()) for doc in docs]
+
+    user_transactions: list[Transaction] = []
+
+    for doc in docs:
+        try:
+            user_transactions.append(Transaction(**doc.to_dict()))
+        except Exception:
+            continue
+
+    return user_transactions
+
+
+def get_transactions_for_interval(
+    uid: str,
+    start_date: date,
+    end_date: date,
+) -> list[Transaction]:
+    interval_transactions: list[Transaction] = []
+
+    for transaction in get_user_transactions(uid):
+        transaction_date = parse_transaction_date(transaction.transactionDate)
+
+        if transaction_date is None:
+            continue
+
+        if start_date <= transaction_date <= end_date:
+            interval_transactions.append(transaction)
+
+    return interval_transactions
+
+
+def build_insights_prompt(
+    range: InsightRange,
+    start_date: date,
+    end_date: date,
+    interval_transactions: list[Transaction],
+) -> str:
+    transaction_payload = [
+        {
+            "amount": transaction.amount,
+            "category": transaction.category,
+            "transactionDate": transaction.transactionDate,
+            "note": transaction.note,
+        }
+        for transaction in interval_transactions
+    ]
+
+    return f"""
+Analyze the user's spending transactions for the selected current calendar {range} period.
+Return only JSON matching the provided InsightAnalysisResponse schema.
+
+Interval:
+- start_date: {start_date.isoformat()}
+- end_date: {end_date.isoformat()}
+- range: {range}
+
+Rules:
+- Generate up to {MAX_INSIGHTS} concise, useful spending insights.
+- Use only the provided transactions. Do not invent merchants, dates, categories, or amounts.
+- Prefer specific observations about category concentration, unusual spending, recurring costs, savings opportunities, or positive trends.
+- Keep each title under 5 words.
+- Keep each description one sentence and under 28 words.
+- Use trend.direction as "up" for higher spending or risk, "down" for lower spending or savings, and "flat" for stable behavior.
+- Use trend.unit as "percent" when the value is a percentage and "amount" when the value is a currency amount.
+- Use one icon from this list: {", ".join(INSIGHT_ICON_NAMES)}.
+- If there is not enough evidence for a useful insight, return an empty insights array.
+
+Transactions:
+{json.dumps(transaction_payload, separators=(",", ":"))}
+""".strip()
+
+
+def generate_insights(
+    range: InsightRange,
+    start_date: date,
+    end_date: date,
+    interval_transactions: list[Transaction],
+) -> list[InsightCard]:
+    prompt = build_insights_prompt(
+        range=range,
+        start_date=start_date,
+        end_date=end_date,
+        interval_transactions=interval_transactions,
+    )
+
+    try:
+        response = app.state.genai_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config={
+                "response_mime_type": "application/json",
+                "response_schema": InsightAnalysisResponse,
+            },
+        )
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to generate spending insights.",
+        ) from error
+
+    try:
+        if isinstance(response.parsed, InsightAnalysisResponse):
+            analysis = response.parsed
+        else:
+            analysis = InsightAnalysisResponse.model_validate_json(response.text or "")
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Insights analysis returned invalid data.",
+        ) from error
+
+    return analysis.insights[:MAX_INSIGHTS]
+
+
+@app.get("/transactions", response_model=list[Transaction])
+def get_transactions(request: Request) -> list[Transaction]:
+    # print_request_headers("GET /transactions", request)
+    uid = get_request_uid(request)
+    return get_user_transactions(uid)
+
+
+@app.get("/insights", response_model=list[InsightCard])
+def get_insights(request: Request, range: InsightRange = "monthly") -> list[InsightCard]:
+    # print_request_headers("GET /insights", request)
+    uid = get_request_uid(request)
+    start_date, end_date = get_current_period_interval(range)
+    cache_key = (uid, range, start_date.isoformat(), end_date.isoformat())
+
+    cached_entry = app.state.insights_cache.get(cache_key)
+    now = time()
+
+    if (
+        cached_entry is not None
+        and now - cached_entry["created_at"] < INSIGHTS_CACHE_TTL_SECONDS
+    ):
+        return cached_entry["insights"]
+
+    interval_transactions = get_transactions_for_interval(uid, start_date, end_date)
+
+    if len(interval_transactions) < MIN_TRANSACTIONS_FOR_INSIGHTS:
+        return []
+
+    insights = generate_insights(
+        range=range,
+        start_date=start_date,
+        end_date=end_date,
+        interval_transactions=interval_transactions,
+    )
+    app.state.insights_cache[cache_key] = {
+        "created_at": now,
+        "insights": insights,
+    }
+
+    return insights
 
 
 @app.post("/receipts/upload", response_model=Transaction)
@@ -205,7 +426,7 @@ For any field that is missing, illegible, incomplete, ambiguous, or uncertain, r
 
     try:
         interaction = app.state.genai_client.interactions.create(
-            model="gemini-3.1-flash-lite",
+            model=GEMINI_MODEL,
             input=[
                 {"type": "text", "text": prompt},
                 {

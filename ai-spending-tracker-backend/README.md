@@ -1,7 +1,7 @@
 # AI Spending Tracker Backend
 
 FastAPI backend for authenticated transactions, Firestore persistence, and
-receipt-image transaction extraction with Google GenAI.
+receipt-image transaction extraction and spending insights with Google GenAI.
 
 ## Setup
 
@@ -113,6 +113,50 @@ Response:
   }
 ]
 ```
+
+### GET `/insights`
+
+Returns Gemini-generated insight cards for the authenticated user's current
+calendar period. The `range` query parameter accepts `weekly`, `monthly`, or
+`yearly`; the default is `monthly`.
+
+Intervals are resolved on the server:
+
+- `weekly` - Monday through today.
+- `monthly` - the first day of the current month through today.
+- `yearly` - January 1 through today.
+
+Only transactions with a valid `YYYY-MM-DD` `transactionDate` inside the
+selected interval are sent to Gemini. Successful insight responses are cached
+for 24 hours per user, range, and interval. If the selected interval has fewer
+than three valid transactions, the endpoint returns an empty array without
+calling Gemini.
+
+```bash
+curl "http://127.0.0.1:8000/insights?range=monthly" \
+  -H "Authorization: Bearer $FIREBASE_ID_TOKEN"
+```
+
+Response:
+
+```json
+[
+  {
+    "id": "monthly-dining",
+    "title": "Dining Lift",
+    "description": "Food and dining is your largest category this month, led by several restaurant transactions.",
+    "icon": "restaurant",
+    "trend": {
+      "value": 24.5,
+      "direction": "up",
+      "period": "current month",
+      "unit": "percent"
+    }
+  }
+]
+```
+
+Gemini generation failures or invalid model responses return `502`.
 
 ### POST `/transactions`
 

@@ -1,6 +1,6 @@
 # AI Spending Tracker
 
-Aura Finance is a responsive spending tracker built with Vite, React, TypeScript, Material UI, Tailwind CSS, React Router, Firebase Authentication, FastAPI, and Firestore. The current branch adds real Firebase sign-in, user-scoped transaction persistence, and a protected receipt-scan upload flow while keeping dashboard and insight screens backed by mock view models.
+Aura Finance is a responsive spending tracker built with Vite, React, TypeScript, Material UI, Tailwind CSS, React Router, Firebase Authentication, FastAPI, and Firestore. The current branch adds real Firebase sign-in, user-scoped transaction persistence, a protected receipt-scan upload flow, and Gemini-generated spending insights.
 
 ## What Is Implemented
 
@@ -8,9 +8,10 @@ Aura Finance is a responsive spending tracker built with Vite, React, TypeScript
 - Protected app routes - `/dashboard`, `/manual-entry`, `/transactions`, `/insights`, and `/scan` require an authenticated Firebase user.
 - `/manual-entry` - expense entry form with amount, category chips, MUI date picker, notes, and a Firebase-authenticated POST to the backend.
 - `/transactions` - Firebase-authenticated transaction loading from the backend, with search, category filters, time filters, loading state, and error state.
+- `/insights` - Firebase-authenticated AI insights generated from the signed-in user's current weekly, monthly, or yearly transactions.
 - `/scan` - protected receipt-image workflow with camera/file selection, image-only validation, preview, selected-file metadata, remove/reselect controls, authenticated upload, and review handoff to manual entry.
 - Backend API - FastAPI endpoints verify Firebase ID tokens, write transactions to Firestore, return only rows for the signed-in user's `uid`, and extract transaction drafts from receipt images.
-- `/dashboard` and `/insights` - polished mock-data experiences for monthly spending and AI-style observations.
+- `/dashboard` - polished mock-data experience for monthly spending.
 
 The frontend builds backend endpoints from `VITE_API_BASE_URL` and sends Firebase ID tokens with API requests through `authenticatedFetch`. The backend validates those tokens with Firebase Admin and stores transactions in the Firestore `transactions` collection with a `uid` field.
 
@@ -34,7 +35,7 @@ The frontend builds backend endpoints from `VITE_API_BASE_URL` and sends Firebas
 - `uv`
 - A Firebase project with Authentication and Firestore enabled
 - A Firebase service account JSON file for the backend
-- A Google GenAI API key for receipt extraction
+- A Google GenAI API key for receipt extraction and spending insights
 
 ## Getting Started
 
@@ -148,6 +149,7 @@ npm run dev -- --host localhost --port 5173
 The backend lives in `ai-spending-tracker-backend/`.
 
 - `GET /transactions` - requires `Authorization: Bearer <Firebase ID token>` and returns transactions for the signed-in user.
+- `GET /insights?range=weekly|monthly|yearly` - requires the same bearer token and returns Gemini-generated insights for the signed-in user's current calendar period.
 - `POST /transactions` - requires the same bearer token and creates a Firestore transaction for the signed-in user.
 - `POST /receipts/upload` - requires the same bearer token, accepts a multipart `receipt` image, and returns an extracted transaction draft without saving it.
 
@@ -237,9 +239,10 @@ Most page data is still shaped through selectors before rendering. Transactions 
 
 ## Current Limitations
 
-- Dashboard and insights still use mock data.
+- Dashboard still uses mock data.
 - Manual expense submission posts to the backend, but success/error UI and form reset behavior are still minimal.
 - The frontend expects `VITE_API_BASE_URL` to point at the backend domain, for example `http://127.0.0.1:8000` locally.
-- The backend supports transaction create/list and receipt extraction only; there is no update/delete endpoint yet.
+- The backend supports transaction create/list, current-period AI insights, and receipt extraction; there is no update/delete endpoint yet.
+- Insights return an empty array when the selected current period has fewer than three valid `YYYY-MM-DD` transactions, and Gemini failures return `502`.
 - Receipt upload extracts transaction drafts with Google GenAI, but there is no receipt image storage integration yet.
 - Ask Aura, Load More, and View All actions are UI-only.
