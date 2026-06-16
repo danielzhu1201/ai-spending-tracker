@@ -176,6 +176,19 @@ def initialize_genai_client():
     return genai.Client(api_key=api_key)
 
 
+def get_cors_allowed_origins() -> list[str]:
+    origins = os.getenv("CORS_ALLOWED_ORIGINS")
+
+    if origins:
+        return [origin.strip() for origin in origins.split(",") if origin.strip()]
+
+    return ["http://localhost:5173", "http://localhost:5174"]
+
+
+def get_cors_allowed_origin_regex() -> str | None:
+    return os.getenv("CORS_ALLOW_ORIGIN_REGEX", r"https://.*\.onrender\.com")
+
+
 app = FastAPI(title="AI Spending Tracker API")
 app.state.firestore_db = initialize_firestore()
 app.state.genai_client = initialize_genai_client()
@@ -183,7 +196,8 @@ app.state.insights_cache = {}
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174"],
+    allow_origins=get_cors_allowed_origins(),
+    allow_origin_regex=get_cors_allowed_origin_regex(),
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type", "Authorization"],
 )

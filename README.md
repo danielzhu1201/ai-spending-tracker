@@ -111,6 +111,18 @@ uv run python start.py
 That entrypoint binds Uvicorn to `0.0.0.0` and reads Render's `PORT`
 environment variable.
 
+When the frontend is deployed, the browser will only let it call the backend if
+the frontend origin is allowed by FastAPI CORS. The backend allows localhost and
+HTTPS Render subdomains by default. For a stricter Render setup, set:
+
+```bash
+CORS_ALLOWED_ORIGINS=https://your-frontend-name.onrender.com
+```
+
+This is separate from Firebase Auth authorized domains. Firebase Auth needs the
+frontend Render domain so login is allowed; FastAPI CORS needs the same frontend
+origin so browser API requests are allowed.
+
 ### Run the Frontend
 
 ```bash
@@ -118,7 +130,9 @@ npm install
 npm run dev
 ```
 
-The Vite dev server starts at `http://localhost:5173` by default. Use the `localhost` URL when talking to the backend because the current backend CORS allow-list is configured for `http://localhost:5173` and `http://localhost:5174`.
+The Vite dev server starts at `http://localhost:5173` by default. Use the
+`localhost` URL when talking to the backend because the backend CORS allow-list
+includes `http://localhost:5173` and `http://localhost:5174`.
 
 To run on an explicit host and port that matches backend CORS:
 

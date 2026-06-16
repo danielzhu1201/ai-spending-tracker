@@ -95,10 +95,45 @@ Requests with a missing, malformed, or invalid token return `401`.
 
 ## CORS
 
-Local frontend origins currently allowed by the API:
+Browsers enforce CORS before they let frontend JavaScript call this API. This is
+separate from Firebase Auth. Firebase answers "is this website allowed to run
+the login flow?" CORS answers "is this website allowed to call this backend from
+a browser?"
+
+Exact local frontend origins allowed by default:
 
 - `http://localhost:5173`
 - `http://localhost:5174`
+
+The API also allows HTTPS Render subdomains by default with this regex:
+
+```bash
+https://.*\.onrender\.com
+```
+
+That means a deployed frontend such as:
+
+```bash
+https://your-frontend-name.onrender.com
+```
+
+can call the deployed backend such as:
+
+```bash
+https://your-backend-name.onrender.com
+```
+
+For a stricter production setup, set exact origins in Render:
+
+```bash
+CORS_ALLOWED_ORIGINS=https://your-frontend-name.onrender.com
+```
+
+You can also override the Render regex:
+
+```bash
+CORS_ALLOW_ORIGIN_REGEX=https://.*\.onrender\.com
+```
 
 Allowed methods are `GET` and `POST`. Allowed headers are `Content-Type` and
 `Authorization`.
