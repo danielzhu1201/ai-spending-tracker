@@ -243,6 +243,6 @@ Most page data is still shaped through selectors before rendering. Transactions 
 - Manual expense submission posts to the backend, but success/error UI and form reset behavior are still minimal.
 - The frontend expects `VITE_API_BASE_URL` to point at the backend domain, for example `http://127.0.0.1:8000` locally.
 - The backend supports transaction create/list, current-period AI insights, and receipt extraction; there is no update/delete endpoint yet.
-- Insights return an empty array when the selected current period has fewer than three valid `YYYY-MM-DD` transactions, and Gemini failures return `502`.
+- Insights return an empty array when the selected current period has fewer than three valid `YYYY-MM-DD` transactions, regenerate when the valid transaction count changes, and return `502` for Gemini failures.
 - Receipt upload extracts transaction drafts with Google GenAI, but there is no receipt image storage integration yet.
 - Ask Aura, Load More, and View All actions are UI-only.

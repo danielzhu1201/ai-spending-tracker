@@ -30,8 +30,6 @@ TransactionCategory = Literal[
     "other",
 ]
 InsightRange = Literal["weekly", "monthly", "yearly"]
-TrendDirection = Literal["up", "down", "flat"]
-TrendUnit = Literal["percent", "amount"]
 
 
 class Transaction(BaseModel):
@@ -68,19 +66,11 @@ class Transaction(BaseModel):
     )
 
 
-class InsightTrend(BaseModel):
-    value: float
-    direction: TrendDirection
-    period: str
-    unit: TrendUnit
-
-
 class InsightCard(BaseModel):
     id: str
     title: str
     description: str
     icon: str
-    trend: InsightTrend
 
 
 class InsightAnalysisResponse(BaseModel):
@@ -164,7 +154,6 @@ INSIGHT_ICON_NAMES = [
     "pie_chart",
     "savings",
     "subscriptions",
-    "trending_up",
 ]
 
 
@@ -260,12 +249,12 @@ def get_transactions_for_interval(
     return interval_transactions
 
 
-def build_insights_prompt(
+def build_insights_inputs(
     range: InsightRange,
     start_date: date,
     end_date: date,
     interval_transactions: list[Transaction],
-) -> str:
+) -> list[str]:
     transaction_payload = [
         {
             "amount": transaction.amount,
@@ -276,7 +265,7 @@ def build_insights_prompt(
         for transaction in interval_transactions
     ]
 
-    return f"""
+    instructions = f"""
 Analyze the user's spending transactions for the selected current calendar {range} period.
 Return only JSON matching the provided InsightAnalysisResponse schema.
 
@@ -288,17 +277,19 @@ Interval:
 Rules:
 - Generate up to {MAX_INSIGHTS} concise, useful spending insights.
 - Use only the provided transactions. Do not invent merchants, dates, categories, or amounts.
-- Prefer specific observations about category concentration, unusual spending, recurring costs, savings opportunities, or positive trends.
+- Prefer specific observations about category concentration, unusual spending, recurring costs, savings opportunities, or positive spending patterns.
 - Keep each title under 5 words.
 - Keep each description one sentence and under 28 words.
-- Use trend.direction as "up" for higher spending or risk, "down" for lower spending or savings, and "flat" for stable behavior.
-- Use trend.unit as "percent" when the value is a percentage and "amount" when the value is a currency amount.
 - Use one icon from this list: {", ".join(INSIGHT_ICON_NAMES)}.
 - If there is not enough evidence for a useful insight, return an empty insights array.
+""".strip()
 
+    transactions = f"""
 Transactions:
 {json.dumps(transaction_payload, separators=(",", ":"))}
 """.strip()
+
+    return [instructions, transactions]
 
 
 def generate_insights(
@@ -307,7 +298,7 @@ def generate_insights(
     end_date: date,
     interval_transactions: list[Transaction],
 ) -> list[InsightCard]:
-    prompt = build_insights_prompt(
+    inputs = build_insights_inputs(
         range=range,
         start_date=start_date,
         end_date=end_date,
@@ -317,7 +308,7 @@ def generate_insights(
     try:
         response = app.state.genai_client.models.generate_content(
             model=GEMINI_MODEL,
-            contents=prompt,
+            contents=inputs,
             config={
                 "response_mime_type": "application/json",
                 "response_schema": InsightAnalysisResponse,
@@ -356,19 +347,20 @@ def get_insights(request: Request, range: InsightRange = "monthly") -> list[Insi
     uid = get_request_uid(request)
     start_date, end_date = get_current_period_interval(range)
     cache_key = (uid, range, start_date.isoformat(), end_date.isoformat())
+    interval_transactions = get_transactions_for_interval(uid, start_date, end_date)
 
     cached_entry = app.state.insights_cache.get(cache_key)
     now = time()
+    transaction_count = len(interval_transactions)
 
     if (
         cached_entry is not None
         and now - cached_entry["created_at"] < INSIGHTS_CACHE_TTL_SECONDS
+        and cached_entry["transaction_count"] == transaction_count
     ):
         return cached_entry["insights"]
 
-    interval_transactions = get_transactions_for_interval(uid, start_date, end_date)
-
-    if len(interval_transactions) < MIN_TRANSACTIONS_FOR_INSIGHTS:
+    if transaction_count < MIN_TRANSACTIONS_FOR_INSIGHTS:
         return []
 
     insights = generate_insights(
@@ -380,6 +372,7 @@ def get_insights(request: Request, range: InsightRange = "monthly") -> list[Insi
     app.state.insights_cache[cache_key] = {
         "created_at": now,
         "insights": insights,
+        "transaction_count": transaction_count,
     }
 
     return insights

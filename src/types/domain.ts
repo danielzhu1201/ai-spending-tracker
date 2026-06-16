@@ -3,20 +3,10 @@ export interface MoneyValue {
   signed: boolean
 }
 
-export type TrendDirection = 'up' | 'down' | 'flat'
-
-export interface TrendMetric {
-  value: number
-  direction: TrendDirection
-  period: string
-  unit: 'percent' | 'amount'
-}
-
 export interface InsightCard {
   id: string
   title: string
   description: string
-  trend: TrendMetric
   icon: string
 }
 

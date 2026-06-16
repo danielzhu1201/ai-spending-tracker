@@ -33,12 +33,6 @@ function toRangeViewModel(dto: InsightsRangeApiDto): InsightRangeViewModel {
       title: observation.title,
       description: observation.description,
       icon: observation.icon,
-      trend: {
-        value: observation.trend_value,
-        direction: observation.trend_direction,
-        period: observation.trend_period,
-        unit: 'percent',
-      },
     })),
   }
 }

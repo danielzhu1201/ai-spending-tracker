@@ -3,7 +3,6 @@ import Typography from '@mui/material/Typography'
 
 import { renderMaterialIcon } from '../../../components/icons/materialIconMap'
 import { IconBadge } from '../../../components/ui/IconBadge'
-import { MetricPill } from '../../../components/ui/MetricPill'
 import type { InsightCard } from '../../../types/domain'
 
 interface InsightObservationCardProps {
@@ -23,10 +22,9 @@ export function InsightObservationCard({ insight }: InsightObservationCardProps)
       }}
     >
       <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <IconBadge tone={insight.trend.direction === 'down' ? 'positive' : 'default'}>
+        <IconBadge>
           {renderMaterialIcon(insight.icon, { fontSize: 'small' })}
         </IconBadge>
-        <MetricPill value={insight.trend.value} direction={insight.trend.direction} />
       </Stack>
 
       <Stack spacing={0.75}>

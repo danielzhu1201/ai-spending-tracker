@@ -128,9 +128,10 @@ Intervals are resolved on the server:
 
 Only transactions with a valid `YYYY-MM-DD` `transactionDate` inside the
 selected interval are sent to Gemini. Successful insight responses are cached
-for 24 hours per user, range, and interval. If the selected interval has fewer
-than three valid transactions, the endpoint returns an empty array without
-calling Gemini.
+for 24 hours per user, range, interval, and valid transaction count; if the
+transaction count changes inside the same period, insights are regenerated. If
+the selected interval has fewer than three valid transactions, the endpoint
+returns an empty array without calling Gemini.
 
 ```bash
 curl "http://127.0.0.1:8000/insights?range=monthly" \
@@ -145,13 +146,7 @@ Response:
     "id": "monthly-dining",
     "title": "Dining Lift",
     "description": "Food and dining is your largest category this month, led by several restaurant transactions.",
-    "icon": "restaurant",
-    "trend": {
-      "value": 24.5,
-      "direction": "up",
-      "period": "current month",
-      "unit": "percent"
-    }
+    "icon": "restaurant"
   }
 ]
 ```

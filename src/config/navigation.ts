@@ -5,7 +5,6 @@ import DocumentScannerRoundedIcon from '@mui/icons-material/DocumentScannerRound
 import GridViewRoundedIcon from '@mui/icons-material/GridViewRounded'
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded'
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded'
-import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded'
 import type { SvgIconComponent } from '@mui/icons-material'
 
 export interface NavigationItem {
@@ -61,7 +60,7 @@ export const desktopTransactionsNavigationItems: NavigationItem[] = [
   {
     label: 'Analytics',
     path: '/insights',
-    icon: TrendingUpRoundedIcon,
+    icon: AnalyticsRoundedIcon,
   },
   {
     label: 'Account',
