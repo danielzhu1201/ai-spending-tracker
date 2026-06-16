@@ -22,10 +22,9 @@ import {
   manualExpenseDraftMock,
   manualExpenseTipMock,
 } from '../../data/mock/futureScreens'
+import { apiEndpoints } from '../../lib/apiConfig'
 import { authenticatedFetch } from '../../lib/authenticatedFetch'
 import type { TransactionCategory, TransactionInfo } from '../../types/domain'
-
-const transactionsEndpoint = 'http://127.0.0.1:8000/transactions'
 
 interface ManualEntryLocationState {
   receiptTransaction?: TransactionInfo
@@ -49,7 +48,7 @@ export function ManualExpenseEntryPage() {
   }, [draft.transactionDate])
 
   const addExpense = async () => {
-    await authenticatedFetch(transactionsEndpoint, {
+    await authenticatedFetch(apiEndpoints.transactions, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

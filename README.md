@@ -8,11 +8,11 @@ Aura Finance is a responsive spending tracker built with Vite, React, TypeScript
 - Protected app routes - `/dashboard`, `/manual-entry`, `/transactions`, `/insights`, and `/scan` require an authenticated Firebase user.
 - `/manual-entry` - expense entry form with amount, category chips, MUI date picker, notes, and a Firebase-authenticated POST to the backend.
 - `/transactions` - Firebase-authenticated transaction loading from the backend, with search, category filters, time filters, loading state, and error state.
-- `/scan` - protected receipt-image workflow with camera/file selection, image-only validation, preview, selected-file metadata, remove/reselect controls, and simulated upload completion.
-- Backend `/transactions` API - FastAPI endpoints verify Firebase ID tokens, write transactions to Firestore, and return only rows for the signed-in user's `uid`.
+- `/scan` - protected receipt-image workflow with camera/file selection, image-only validation, preview, selected-file metadata, remove/reselect controls, authenticated upload, and review handoff to manual entry.
+- Backend API - FastAPI endpoints verify Firebase ID tokens, write transactions to Firestore, return only rows for the signed-in user's `uid`, and extract transaction drafts from receipt images.
 - `/dashboard` and `/insights` - polished mock-data experiences for monthly spending and AI-style observations.
 
-The frontend sends Firebase ID tokens with API requests through `authenticatedFetch`. The backend validates those tokens with Firebase Admin and stores transactions in the Firestore `transactions` collection with a `uid` field.
+The frontend builds backend endpoints from `VITE_API_BASE_URL` and sends Firebase ID tokens with API requests through `authenticatedFetch`. The backend validates those tokens with Firebase Admin and stores transactions in the Firestore `transactions` collection with a `uid` field.
 
 ## Tech Stack
 
@@ -34,12 +34,13 @@ The frontend sends Firebase ID tokens with API requests through `authenticatedFe
 - `uv`
 - A Firebase project with Authentication and Firestore enabled
 - A Firebase service account JSON file for the backend
+- A Google GenAI API key for receipt extraction
 
 ## Getting Started
 
 ### Frontend Environment
 
-Copy the frontend example environment file and fill in your Firebase web app values:
+Copy the frontend example environment file and fill in the backend base URL and Firebase web app values:
 
 ```bash
 cp .env.example .env
@@ -48,6 +49,7 @@ cp .env.example .env
 Required values:
 
 ```bash
+VITE_API_BASE_URL=http://127.0.0.1:8000
 VITE_FIREBASE_API_KEY=
 VITE_FIREBASE_AUTH_DOMAIN=
 VITE_FIREBASE_PROJECT_ID=
@@ -58,7 +60,7 @@ VITE_FIREBASE_APP_ID=
 
 ### Backend Environment
 
-Create the backend environment file and point it at your local service account JSON:
+Create the backend environment file and point it at your local service account JSON and Google GenAI API key:
 
 ```bash
 cp ai-spending-tracker-backend/.env.example ai-spending-tracker-backend/.env
@@ -66,6 +68,7 @@ cp ai-spending-tracker-backend/.env.example ai-spending-tracker-backend/.env
 
 ```bash
 FIREBASE_CREDENTIALS_PATH=path/to/serviceAccountKey.json
+GEMINI_API_KEY=your_google_genai_api_key
 ```
 
 Relative paths are resolved from `ai-spending-tracker-backend`. Keep service account JSON files local and untracked.
@@ -103,7 +106,7 @@ Set up and run this project on a brand-new local machine with nothing installed.
 2) Install Git, Node.js LTS with npm, Python 3.11+, and uv using OS-native package managers where possible.
 3) Clone the repository and enter the project folder.
 4) Create .env from .env.example and ai-spending-tracker-backend/.env from its example.
-5) Prompt me for Firebase web app config values and the backend service account JSON path.
+5) Prompt me for the frontend API base URL, Firebase web app config values, the backend service account JSON path, and the Google GenAI API key.
 6) Install frontend and backend dependencies.
 7) Validate with frontend lint/build and a backend import/startup check.
 8) Start the backend on 127.0.0.1:8000 and the frontend on localhost:5173.
@@ -118,7 +121,7 @@ git clone <your-repo-url>
 cd ai-spending-tracker
 cp .env.example .env
 cp ai-spending-tracker-backend/.env.example ai-spending-tracker-backend/.env
-# fill in Firebase web app values in .env and FIREBASE_CREDENTIALS_PATH in the backend .env
+# fill in VITE_API_BASE_URL and Firebase web app values in .env, then FIREBASE_CREDENTIALS_PATH and GEMINI_API_KEY in the backend .env
 npm install
 npm run lint
 npm run build
@@ -146,6 +149,7 @@ The backend lives in `ai-spending-tracker-backend/`.
 
 - `GET /transactions` - requires `Authorization: Bearer <Firebase ID token>` and returns transactions for the signed-in user.
 - `POST /transactions` - requires the same bearer token and creates a Firestore transaction for the signed-in user.
+- `POST /receipts/upload` - requires the same bearer token, accepts a multipart `receipt` image, and returns an extracted transaction draft without saving it.
 
 Example authenticated request:
 
@@ -235,7 +239,7 @@ Most page data is still shaped through selectors before rendering. Transactions 
 
 - Dashboard and insights still use mock data.
 - Manual expense submission posts to the backend, but success/error UI and form reset behavior are still minimal.
-- The frontend currently uses a hard-coded local backend URL: `http://127.0.0.1:8000/transactions`.
-- The backend supports transaction create/list only; there is no update/delete endpoint yet.
-- Receipt upload is currently simulated in the frontend; there is no backend receipt endpoint, storage integration, OCR, or transaction extraction yet.
+- The frontend expects `VITE_API_BASE_URL` to point at the backend domain, for example `http://127.0.0.1:8000` locally.
+- The backend supports transaction create/list and receipt extraction only; there is no update/delete endpoint yet.
+- Receipt upload extracts transaction drafts with Google GenAI, but there is no receipt image storage integration yet.
 - Ask Aura, Load More, and View All actions are UI-only.

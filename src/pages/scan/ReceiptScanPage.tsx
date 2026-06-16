@@ -16,12 +16,11 @@ import type { ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { PageContainer } from '../../components/layout/PageContainer'
+import { apiEndpoints } from '../../lib/apiConfig'
 import { authenticatedFetch } from '../../lib/authenticatedFetch'
 import type { TransactionInfo } from '../../types/domain'
 
 type ReceiptUploadState = 'empty' | 'ready' | 'uploading' | 'uploaded' | 'invalid'
-
-const receiptUploadEndpoint = 'http://127.0.0.1:8000/receipts/upload'
 
 const formatFileSize = (bytes: number) => {
   if (bytes < 1024) {
@@ -102,7 +101,7 @@ export function ReceiptScanPage() {
     formData.append('receipt', receiptFile)
 
     try {
-      const response = await authenticatedFetch(receiptUploadEndpoint, {
+      const response = await authenticatedFetch(apiEndpoints.receiptUpload, {
         method: 'POST',
         body: formData,
       })

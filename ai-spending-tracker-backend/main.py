@@ -61,16 +61,6 @@ class Transaction(BaseModel):
         )
     )
 
-
-class PromptRequest(BaseModel):
-    prompt: str
-    model: str = "gemini-3.5-flash"
-
-
-class PromptResponse(BaseModel):
-    answer: str
-
-
 def get_firebase_credentials_path() -> Path:
     credentials_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 
@@ -202,11 +192,6 @@ async def upload_receipt(
         )
 
     image_base64 = base64.b64encode(image_bytes).decode("utf-8")
-
-    print(f"Received receipt upload: filename={receipt.filename}, "
-          f"content_type={receipt.content_type}, size={len(image_bytes)} bytes")
-    print(f"Base64-encoded image size: {len(image_base64)} characters")
-
     prompt = """
 Parse this receipt image into one spending transaction.
 Return only JSON that matches the Transaction schema.
