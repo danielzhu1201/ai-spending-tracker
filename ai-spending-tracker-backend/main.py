@@ -82,13 +82,28 @@ class DashboardResponse(BaseModel):
     recentTransactions: list[Transaction]
 
 
+FIREBASE_SERVICE_ACCOUNT_ENV_FIELDS = {
+    "type": "FIREBASE_TYPE",
+    "project_id": "FIREBASE_PROJECT_ID",
+    "private_key_id": "FIREBASE_PRIVATE_KEY_ID",
+    "private_key": "FIREBASE_PRIVATE_KEY",
+    "client_email": "FIREBASE_CLIENT_EMAIL",
+    "client_id": "FIREBASE_CLIENT_ID",
+    "auth_uri": "FIREBASE_AUTH_URI",
+    "token_uri": "FIREBASE_TOKEN_URI",
+    "auth_provider_x509_cert_url": "FIREBASE_AUTH_PROVIDER_X509_CERT_URL",
+    "client_x509_cert_url": "FIREBASE_CLIENT_X509_CERT_URL",
+}
+
+
 def get_firebase_credentials_path() -> Path:
     credentials_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 
     if not credentials_path:
         raise RuntimeError(
-            "FIREBASE_CREDENTIALS_PATH is not set. Add it to "
-            "ai-spending-tracker-backend/.env."
+            "Firebase credentials are not configured. Set the Firebase service "
+            "account environment variables, or set FIREBASE_CREDENTIALS_PATH "
+            "for local development."
         )
 
     path = Path(credentials_path).expanduser()
@@ -102,9 +117,48 @@ def get_firebase_credentials_path() -> Path:
     return path
 
 
+def get_firebase_credentials_config() -> dict[str, str]:
+    service_account = {
+        json_key: os.getenv(env_key)
+        for json_key, env_key in FIREBASE_SERVICE_ACCOUNT_ENV_FIELDS.items()
+    }
+
+    missing_env_keys = [
+        env_key
+        for json_key, env_key in FIREBASE_SERVICE_ACCOUNT_ENV_FIELDS.items()
+        if not service_account[json_key]
+    ]
+
+    if missing_env_keys:
+        if os.getenv("FIREBASE_CREDENTIALS_PATH"):
+            return {}
+
+        if len(missing_env_keys) == len(FIREBASE_SERVICE_ACCOUNT_ENV_FIELDS):
+            return {}
+
+        raise RuntimeError(
+            "Incomplete Firebase service account environment config. Missing: "
+            f"{', '.join(missing_env_keys)}."
+        )
+
+    service_account["private_key"] = service_account["private_key"].replace(
+        "\\n",
+        "\n",
+    )
+
+    universe_domain = os.getenv("FIREBASE_UNIVERSE_DOMAIN")
+    if universe_domain:
+        service_account["universe_domain"] = universe_domain
+
+    return service_account
+
+
 def initialize_firestore():
     if not firebase_admin._apps:
-        cred = credentials.Certificate(str(get_firebase_credentials_path()))
+        credentials_config = get_firebase_credentials_config()
+        cred = credentials.Certificate(
+            credentials_config or str(get_firebase_credentials_path())
+        )
         firebase_admin.initialize_app(cred)
 
     return firestore.client()

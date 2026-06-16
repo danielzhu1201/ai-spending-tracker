@@ -20,12 +20,27 @@ cp .env.example .env
 Required values:
 
 ```bash
-FIREBASE_CREDENTIALS_PATH=path/to/serviceAccountKey.json
+FIREBASE_TYPE=service_account
+FIREBASE_PROJECT_ID=your_firebase_project_id
+FIREBASE_PRIVATE_KEY_ID=your_private_key_id
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=your_service_account_email
+FIREBASE_CLIENT_ID=your_service_account_client_id
+FIREBASE_AUTH_URI=https://accounts.google.com/o/oauth2/auth
+FIREBASE_TOKEN_URI=https://oauth2.googleapis.com/token
+FIREBASE_AUTH_PROVIDER_X509_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
+FIREBASE_CLIENT_X509_CERT_URL=your_client_cert_url
 GEMINI_API_KEY=your_google_genai_api_key
 ```
 
-Relative `FIREBASE_CREDENTIALS_PATH` values are resolved from this backend
-directory. Keep service account JSON files local and untracked.
+These Firebase values come from your service account JSON. `FIREBASE_PRIVATE_KEY`
+may be pasted with real line breaks or with escaped `\n` sequences, which is
+often easiest in hosted environment variable UIs like Render.
+
+For local development only, you can still use `FIREBASE_CREDENTIALS_PATH` instead
+of the individual Firebase service account variables. Relative
+`FIREBASE_CREDENTIALS_PATH` values are resolved from this backend directory. Keep
+service account JSON files local and untracked.
 
 ## Run
 
@@ -34,8 +49,9 @@ uv run uvicorn main:app --reload
 ```
 
 The API runs at `http://127.0.0.1:8000` by default. Firebase Admin, Firestore,
-and the Google GenAI client are initialized during API startup, so both
-environment variables must be valid before the server starts.
+and the Google GenAI client are initialized during API startup, so the Firebase
+service account values and `GEMINI_API_KEY` must be valid before the server
+starts.
 
 Interactive docs are available at `http://127.0.0.1:8000/docs`.
 

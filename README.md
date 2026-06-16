@@ -61,18 +61,34 @@ VITE_FIREBASE_APP_ID=
 
 ### Backend Environment
 
-Create the backend environment file and point it at your local service account JSON and Google GenAI API key:
+Create the backend environment file and add your Firebase service account values
+and Google GenAI API key:
 
 ```bash
 cp ai-spending-tracker-backend/.env.example ai-spending-tracker-backend/.env
 ```
 
 ```bash
-FIREBASE_CREDENTIALS_PATH=path/to/serviceAccountKey.json
+FIREBASE_TYPE=service_account
+FIREBASE_PROJECT_ID=your_firebase_project_id
+FIREBASE_PRIVATE_KEY_ID=your_private_key_id
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=your_service_account_email
+FIREBASE_CLIENT_ID=your_service_account_client_id
+FIREBASE_AUTH_URI=https://accounts.google.com/o/oauth2/auth
+FIREBASE_TOKEN_URI=https://oauth2.googleapis.com/token
+FIREBASE_AUTH_PROVIDER_X509_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
+FIREBASE_CLIENT_X509_CERT_URL=your_client_cert_url
 GEMINI_API_KEY=your_google_genai_api_key
 ```
 
-Relative paths are resolved from `ai-spending-tracker-backend`. Keep service account JSON files local and untracked.
+These Firebase values map directly to the fields in the service account JSON.
+`FIREBASE_PRIVATE_KEY` may contain real line breaks or escaped `\n` sequences,
+which works well for Render environment variables. For local development only,
+you can still use `FIREBASE_CREDENTIALS_PATH=path/to/serviceAccountKey.json`
+instead of the individual Firebase service account variables. Relative paths are
+resolved from `ai-spending-tracker-backend`. Keep service account JSON files
+local and untracked.
 
 ### Run the Backend
 
@@ -122,7 +138,8 @@ git clone <your-repo-url>
 cd ai-spending-tracker
 cp .env.example .env
 cp ai-spending-tracker-backend/.env.example ai-spending-tracker-backend/.env
-# fill in VITE_API_BASE_URL and Firebase web app values in .env, then FIREBASE_CREDENTIALS_PATH and GEMINI_API_KEY in the backend .env
+# fill in VITE_API_BASE_URL and Firebase web app values in .env,
+# then Firebase service account values and GEMINI_API_KEY in the backend .env
 npm install
 npm run lint
 npm run build
