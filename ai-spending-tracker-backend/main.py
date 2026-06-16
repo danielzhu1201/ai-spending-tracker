@@ -261,8 +261,6 @@ def get_request_uid(request: Request) -> str:
         ) from error
 
     uid = decoded_token["uid"]
-    print(f"Decoded Firebase uid: {uid}")
-
     return uid
 
 
