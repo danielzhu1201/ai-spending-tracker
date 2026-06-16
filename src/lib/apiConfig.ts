@@ -7,6 +7,7 @@ if (!apiBaseUrl) {
 const normalizedApiBaseUrl = apiBaseUrl.replace(/\/+$/, '')
 
 export const apiEndpoints = {
+  dashboard: `${normalizedApiBaseUrl}/dashboard`,
   insights: `${normalizedApiBaseUrl}/insights`,
   transactions: `${normalizedApiBaseUrl}/transactions`,
   receiptUpload: `${normalizedApiBaseUrl}/receipts/upload`,

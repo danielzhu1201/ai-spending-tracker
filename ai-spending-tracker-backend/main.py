@@ -77,6 +77,11 @@ class InsightAnalysisResponse(BaseModel):
     insights: list[InsightCard]
 
 
+class DashboardResponse(BaseModel):
+    currentMonthSpend: float
+    recentTransactions: list[Transaction]
+
+
 def get_firebase_credentials_path() -> Path:
     credentials_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 
@@ -249,6 +254,26 @@ def get_transactions_for_interval(
     return interval_transactions
 
 
+def parse_transaction_amount(amount: str) -> float:
+    try:
+        return abs(float(amount))
+    except ValueError:
+        return 0
+
+
+def sort_transactions_by_date_desc(
+    transactions: list[Transaction],
+) -> list[Transaction]:
+    return sorted(
+        transactions,
+        key=lambda transaction: (
+            parse_transaction_date(transaction.transactionDate) or date.min,
+            transaction.transactionDate,
+        ),
+        reverse=True,
+    )
+
+
 def build_insights_inputs(
     range: InsightRange,
     start_date: date,
@@ -339,6 +364,29 @@ def get_transactions(request: Request) -> list[Transaction]:
     # print_request_headers("GET /transactions", request)
     uid = get_request_uid(request)
     return get_user_transactions(uid)
+
+
+@app.get("/dashboard", response_model=DashboardResponse)
+def get_dashboard(request: Request) -> DashboardResponse:
+    # print_request_headers("GET /dashboard", request)
+    uid = get_request_uid(request)
+    month_start, today = get_current_period_interval("monthly")
+    user_transactions = get_user_transactions(uid)
+    current_month_spend = sum(
+        parse_transaction_amount(transaction.amount)
+        for transaction in user_transactions
+        if (
+            (transaction_date := parse_transaction_date(transaction.transactionDate))
+            is not None
+            and month_start <= transaction_date <= today
+            and transaction.category != "salary"
+        )
+    )
+
+    return DashboardResponse(
+        currentMonthSpend=round(current_month_spend, 2),
+        recentTransactions=sort_transactions_by_date_desc(user_transactions)[:5],
+    )
 
 
 @app.get("/insights", response_model=list[InsightCard])

@@ -11,5 +11,6 @@ function toMoney(amount: number): MoneyValue {
 export function selectDashboardSummary(api: DashboardApiResponse) {
   return {
     currentMonthSpend: toMoney(api.currentMonthSpend),
+    recentTransactions: api.recentTransactions,
   }
 }
