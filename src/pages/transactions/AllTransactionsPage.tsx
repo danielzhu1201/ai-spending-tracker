@@ -12,6 +12,7 @@ import { PageContainer } from "../../components/layout/PageContainer";
 import { TransactionRow } from "../../components/transactions/TransactionRow";
 import { FilterChip } from "../../components/ui/FilterChip";
 import { selectTransactionsPageViewModel } from "../../data/selectors/transactionsSelectors";
+import { apiEndpoints } from "../../lib/apiConfig";
 import { authenticatedFetch } from "../../lib/authenticatedFetch";
 import type { TransactionCategory, TransactionInfo } from "../../types/domain";
 import { formatMoney } from "../../utils/formatters";
@@ -19,8 +20,6 @@ import {
   getManualExpenseCategoryDisplay,
   toManualExpenseMoney,
 } from "../../utils/manualExpense";
-
-const transactionsEndpoint = "http://127.0.0.1:8000/transactions";
 
 type TransactionTimeFilter = "this-week" | "this-month" | "last-3-months";
 
@@ -90,7 +89,7 @@ export function AllTransactionsPage() {
         setIsLoadingTransactions(true);
         setTransactionsError(null);
 
-        const response = await authenticatedFetch(transactionsEndpoint, {
+        const response = await authenticatedFetch(apiEndpoints.transactions, {
           signal: abortController.signal,
         });
 
