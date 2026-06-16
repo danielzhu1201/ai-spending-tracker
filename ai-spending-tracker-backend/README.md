@@ -44,6 +44,8 @@ service account JSON files local and untracked.
 
 ## Run
 
+For local development with reload:
+
 ```bash
 uv run uvicorn main:app --reload
 ```
@@ -54,6 +56,26 @@ service account values and `GEMINI_API_KEY` must be valid before the server
 starts.
 
 Interactive docs are available at `http://127.0.0.1:8000/docs`.
+
+## Render Deploy
+
+Set the Render service's root directory to `ai-spending-tracker-backend`, then
+use:
+
+```bash
+uv sync
+```
+
+as the build command and:
+
+```bash
+uv run python start.py
+```
+
+as the start command.
+
+`start.py` binds Uvicorn to `0.0.0.0` and uses Render's `PORT` environment
+variable, which lets Render detect the public HTTP port during deployment.
 
 ## Authentication
 

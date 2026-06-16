@@ -100,6 +100,17 @@ uv run uvicorn main:app --reload
 
 The API starts at `http://127.0.0.1:8000`. Interactive docs are available at `http://127.0.0.1:8000/docs`.
 
+For Render, set the backend service root directory to
+`ai-spending-tracker-backend`, use `uv sync` as the build command, and use this
+start command:
+
+```bash
+uv run python start.py
+```
+
+That entrypoint binds Uvicorn to `0.0.0.0` and reads Render's `PORT`
+environment variable.
+
 ### Run the Frontend
 
 ```bash
