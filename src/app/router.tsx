@@ -11,7 +11,7 @@ import { AllTransactionsPage } from "../pages/transactions/AllTransactionsPage";
 export function AppRouter() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route
         path="/dashboard"
         element={
@@ -53,6 +53,7 @@ export function AppRouter() {
         }
       />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }

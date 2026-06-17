@@ -189,7 +189,7 @@ def get_cors_allowed_origin_regex() -> str | None:
     return os.getenv("CORS_ALLOW_ORIGIN_REGEX", r"https://.*\.onrender\.com")
 
 
-app = FastAPI(title="AI Spending Tracker API")
+app = FastAPI(title="AI Financial Planner API")
 app.state.firestore_db = initialize_firestore()
 app.state.genai_client = initialize_genai_client()
 app.state.insights_cache = {}

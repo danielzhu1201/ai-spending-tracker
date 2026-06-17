@@ -1,4 +1,4 @@
-# AI Spending Tracker Backend
+# AI Financial Planner Backend
 
 FastAPI backend for authenticated transactions, Firestore persistence, and
 receipt-image transaction extraction and spending insights with Google GenAI.

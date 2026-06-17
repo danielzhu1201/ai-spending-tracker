@@ -3,9 +3,12 @@ import LightbulbRoundedIcon from '@mui/icons-material/LightbulbRounded'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import CircularProgress from '@mui/material/CircularProgress'
 import Paper from '@mui/material/Paper'
+import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import dayjs from 'dayjs'
@@ -30,13 +33,29 @@ interface ManualEntryLocationState {
   receiptTransaction?: TransactionInfo
 }
 
+type SaveToast = {
+  message: string
+  severity: 'success' | 'error'
+}
+
+function createManualExpenseDraft(initial?: TransactionInfo): TransactionInfo {
+  return {
+    ...manualExpenseDraftMock,
+    ...initial,
+    transactionDate: dayjs().format('YYYY-MM-DD'),
+    ...(initial?.transactionDate ? { transactionDate: initial.transactionDate } : {}),
+  }
+}
+
 export function ManualExpenseEntryPage() {
   const location = useLocation()
   const receiptTransaction = (location.state as ManualEntryLocationState | null)
     ?.receiptTransaction
   const [draft, setDraft] = useState<TransactionInfo>(
-    () => receiptTransaction ?? manualExpenseDraftMock,
+    () => createManualExpenseDraft(receiptTransaction),
   )
+  const [isSavingExpense, setIsSavingExpense] = useState(false)
+  const [saveToast, setSaveToast] = useState<SaveToast | null>(null)
 
   const amountPlaceholder = useMemo(
     () => (draft.amount.length > 0 ? undefined : '0.00'),
@@ -48,13 +67,48 @@ export function ManualExpenseEntryPage() {
   }, [draft.transactionDate])
 
   const addExpense = async () => {
-    await authenticatedFetch(apiEndpoints.transactions, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(draft),
-    })
+    if (isSavingExpense) {
+      return
+    }
+
+    setIsSavingExpense(true)
+    setSaveToast(null)
+
+    try {
+      const response = await authenticatedFetch(apiEndpoints.transactions, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(draft),
+      })
+
+      if (!response.ok) {
+        let message = 'Unable to save expense.'
+
+        try {
+          const errorBody = (await response.json()) as { detail?: string }
+          message = errorBody.detail ?? message
+        } catch {
+          message = response.statusText || message
+        }
+
+        throw new Error(message)
+      }
+
+      setDraft(createManualExpenseDraft())
+      setSaveToast({
+        message: 'Transaction added successfully.',
+        severity: 'success',
+      })
+    } catch (error) {
+      setSaveToast({
+        message: error instanceof Error ? error.message : 'Unable to save expense.',
+        severity: 'error',
+      })
+    } finally {
+      setIsSavingExpense(false)
+    }
   }
 
   return (
@@ -107,6 +161,7 @@ export function ManualExpenseEntryPage() {
                 type="number"
                 value={draft.amount}
                 placeholder={amountPlaceholder}
+                disabled={isSavingExpense}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => {
                   setDraft((current) => ({
                     ...current,
@@ -141,6 +196,10 @@ export function ManualExpenseEntryPage() {
               options={manualExpenseCategoryOptionsMock}
               selectedValue={draft.category}
               onChange={(nextCategory) => {
+                if (isSavingExpense) {
+                  return
+                }
+
                 setDraft((current) => ({
                   ...current,
                   category: nextCategory as TransactionCategory,
@@ -160,6 +219,7 @@ export function ManualExpenseEntryPage() {
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                   value={dateValue}
+                  disabled={isSavingExpense}
                   onChange={(value: Dayjs | null) => {
                     setDraft((current) => ({
                       ...current,
@@ -188,6 +248,7 @@ export function ManualExpenseEntryPage() {
               value={draft.note}
               multiline
               minRows={4}
+              disabled={isSavingExpense}
               onChange={(event) => {
                 setDraft((current) => ({
                   ...current,
@@ -200,7 +261,8 @@ export function ManualExpenseEntryPage() {
           <Button
             variant="contained"
             size="large"
-            startIcon={<AddRoundedIcon />}
+            startIcon={isSavingExpense ? undefined : <AddRoundedIcon />}
+            disabled={isSavingExpense}
             onClick={() => {
               void addExpense()
             }}
@@ -211,7 +273,11 @@ export function ManualExpenseEntryPage() {
               fontSize: '1rem',
             }}
           >
-            Add Expense
+            {isSavingExpense ? (
+              <CircularProgress size={24} sx={{ color: '#ffffff' }} />
+            ) : (
+              'Add Expense'
+            )}
           </Button>
 
           <Paper
@@ -260,6 +326,24 @@ export function ManualExpenseEntryPage() {
           </Paper>
         </Stack>
       </PageContainer>
+
+      <Snackbar
+        open={Boolean(saveToast)}
+        autoHideDuration={4000}
+        onClose={() => setSaveToast(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        {saveToast ? (
+          <Alert
+            severity={saveToast.severity}
+            variant="filled"
+            onClose={() => setSaveToast(null)}
+            sx={{ width: '100%' }}
+          >
+            {saveToast.message}
+          </Alert>
+        ) : undefined}
+      </Snackbar>
     </>
   )
 }

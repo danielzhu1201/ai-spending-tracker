@@ -11,7 +11,6 @@ import type {
 import { apiEndpoints } from '../../lib/apiConfig'
 import { authenticatedFetch } from '../../lib/authenticatedFetch'
 import type { InsightCard } from '../../types/domain'
-import { AskAuraFab } from './components/AskAuraFab'
 import { InsightObservationCard } from './components/InsightObservationCard'
 import { InsightRangeTabs } from './components/InsightRangeTabs'
 
@@ -102,59 +101,55 @@ export function InsightsPage() {
   }, [selectedRange])
 
   return (
-    <>
-      <PageContainer>
-        <Stack spacing={3}>
-          <Stack spacing={2}>
-            <Stack spacing={0.5}>
-              <Typography
-                variant="caption"
-                sx={{ color: 'var(--aura-on-surface-variant)', letterSpacing: '0.08em' }}
-              >
-                FINANCIAL OVERVIEW
-              </Typography>
-              <Typography variant="h2" sx={{ color: 'var(--aura-primary)' }}>
-                Smart Insights
-              </Typography>
-            </Stack>
-            <InsightRangeTabs
-              ranges={insightRanges}
-              value={selectedRange}
-              onChange={setSelectedRange}
-            />
+    <PageContainer>
+      <Stack spacing={3}>
+        <Stack spacing={2}>
+          <Stack spacing={0.5}>
+            <Typography
+              variant="caption"
+              sx={{ color: 'var(--aura-on-surface-variant)', letterSpacing: '0.08em' }}
+            >
+              FINANCIAL OVERVIEW
+            </Typography>
+            <Typography variant="h2" sx={{ color: 'var(--aura-primary)' }}>
+              Smart Insights
+            </Typography>
           </Stack>
-
-          {isLoadingInsights ? (
-            <InsightLoadingState />
-          ) : insightsError ? (
-            <Stack spacing={1} sx={{ p: 2.25 }}>
-              <Typography variant="body1" sx={{ color: 'var(--aura-primary)' }}>
-                Unable to load insights
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'var(--aura-on-surface-variant)' }}>
-                {insightsError}
-              </Typography>
-            </Stack>
-          ) : insights.length === 0 ? (
-            <Stack spacing={1} sx={{ p: 2.25 }}>
-              <Typography variant="body1" sx={{ color: 'var(--aura-primary)' }}>
-                No insights yet
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'var(--aura-on-surface-variant)' }}>
-                Add more transactions to unlock spending observations.
-              </Typography>
-            </Stack>
-          ) : (
-            <Stack spacing={2}>
-              {insights.map((insight) => (
-                <InsightObservationCard key={insight.id} insight={insight} />
-              ))}
-            </Stack>
-          )}
+          <InsightRangeTabs
+            ranges={insightRanges}
+            value={selectedRange}
+            onChange={setSelectedRange}
+          />
         </Stack>
-      </PageContainer>
 
-      <AskAuraFab />
-    </>
+        {isLoadingInsights ? (
+          <InsightLoadingState />
+        ) : insightsError ? (
+          <Stack spacing={1} sx={{ p: 2.25 }}>
+            <Typography variant="body1" sx={{ color: 'var(--aura-primary)' }}>
+              Unable to load insights
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'var(--aura-on-surface-variant)' }}>
+              {insightsError}
+            </Typography>
+          </Stack>
+        ) : insights.length === 0 ? (
+          <Stack spacing={1} sx={{ p: 2.25 }}>
+            <Typography variant="body1" sx={{ color: 'var(--aura-primary)' }}>
+              No insights yet
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'var(--aura-on-surface-variant)' }}>
+              Add more transactions to unlock spending observations.
+            </Typography>
+          </Stack>
+        ) : (
+          <Stack spacing={2}>
+            {insights.map((insight) => (
+              <InsightObservationCard key={insight.id} insight={insight} />
+            ))}
+          </Stack>
+        )}
+      </Stack>
+    </PageContainer>
   )
 }

@@ -16,6 +16,7 @@ export type TransactionCategory =
   | 'housing'
   | 'shopping'
   | 'transport'
+  | 'salary'
   | 'utilities'
   | 'other'
 

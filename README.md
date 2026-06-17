@@ -1,17 +1,17 @@
-# AI Spending Tracker
+# AI Financial Planner
 
-Aura Finance is a responsive spending tracker built with Vite, React, TypeScript, Material UI, Tailwind CSS, React Router, Firebase Authentication, FastAPI, and Firestore. The current branch adds real Firebase sign-in, user-scoped transaction persistence, a protected receipt-scan upload flow, and Gemini-generated spending insights.
+AI Financial Planner is a responsive spending and transaction planning app built with Vite, React, TypeScript, Material UI, Tailwind CSS, React Router, Firebase Authentication, FastAPI, and Firestore. The current branch adds real Firebase sign-in, user-scoped transaction persistence, a protected receipt-scan upload flow, and Gemini-generated spending insights.
 
 ## What Is Implemented
 
 - `/login` - Firebase email/password and Google authentication, account creation, password reset, signed-in account details, and sign out.
 - Protected app routes - `/dashboard`, `/manual-entry`, `/transactions`, `/insights`, and `/scan` require an authenticated Firebase user.
-- `/manual-entry` - expense entry form with amount, category chips, MUI date picker, notes, and a Firebase-authenticated POST to the backend.
+- `/manual-entry` - expense entry form with amount, category chips, MUI date picker, notes, save feedback, and a Firebase-authenticated POST to the backend.
 - `/transactions` - Firebase-authenticated transaction loading from the backend, with search, category filters, time filters, loading state, and error state.
 - `/insights` - Firebase-authenticated AI insights generated from the signed-in user's current weekly, monthly, or yearly transactions.
 - `/scan` - protected receipt-image workflow with camera/file selection, image-only validation, preview, selected-file metadata, remove/reselect controls, authenticated upload, and review handoff to manual entry.
 - Backend API - FastAPI endpoints verify Firebase ID tokens, write transactions to Firestore, return only rows for the signed-in user's `uid`, and extract transaction drafts from receipt images.
-- `/dashboard` - polished mock-data experience for monthly spending.
+- `/dashboard` - authenticated monthly spending summary and recent transaction overview.
 
 The frontend builds backend endpoints from `VITE_API_BASE_URL` and sends Firebase ID tokens with API requests through `authenticatedFetch`. The backend validates those tokens with Firebase Admin and stores transactions in the Firestore `transactions` collection with a `uid` field.
 
@@ -249,7 +249,7 @@ npm run dev -- --host 127.0.0.1 --port 5173
 
 - Enable Tailwind via `@tailwindcss/vite` in `vite.config.ts`.
 - Import Tailwind in `src/index.css` using `@import "tailwindcss";`.
-- Wrap the app with `AppThemeProvider` in `src/main.tsx` to apply the Aura MUI theme and CSS variables.
+- Wrap the app with `AppThemeProvider` in `src/main.tsx` to apply the app MUI theme and CSS variables.
 - Confirm the app boots at `http://localhost:5173/`.
 
 ## Project Structure
@@ -264,7 +264,7 @@ src/
   data/selectors/   View-model selectors that shape mock data for pages
   lib/              Firebase initialization and authenticated fetch helper
   pages/            Route-level screen implementations
-  theme/            Aura design tokens, MUI theme, and CSS variables
+  theme/            App design tokens, MUI theme, and CSS variables
   types/            Shared domain types
   utils/            Formatting and class-name helpers
 
@@ -275,16 +275,16 @@ ai-spending-tracker-backend/
 
 ## UI Notes
 
-The visual system is centralized in `src/theme/auraTokens.ts` and `src/theme/auraTheme.ts`. `AppThemeProvider` applies the MUI theme, CSS baseline, and Aura CSS variables globally. Shared layout components provide the top app bar, responsive page container, desktop side navigation, and mobile bottom navigation.
+The visual system is centralized in `src/theme/auraTokens.ts` and `src/theme/auraTheme.ts`. `AppThemeProvider` applies the MUI theme, CSS baseline, and app CSS variables globally. Shared layout components provide the top app bar, responsive page container, desktop side navigation, and mobile bottom navigation.
 
 Most page data is still shaped through selectors before rendering. Transactions now enter the app through the backend, then flow through the same selector layer used by the earlier mock implementation.
 
 ## Current Limitations
 
-- Dashboard still uses mock data.
-- Manual expense submission posts to the backend, but success/error UI and form reset behavior are still minimal.
+- Dashboard is intentionally compact and does not include budgeting, charts, or category drill-downs yet.
+- Manual expense submission stays on the form and confirms success or failure with a toast.
 - The frontend expects `VITE_API_BASE_URL` to point at the backend domain, for example `http://127.0.0.1:8000` locally.
 - The backend supports transaction create/list, current-period AI insights, and receipt extraction; there is no update/delete endpoint yet.
 - Insights return an empty array when the selected current period has fewer than three valid `YYYY-MM-DD` transactions, regenerate when the valid transaction count changes, and return `502` for Gemini failures.
 - Receipt upload extracts transaction drafts with Google GenAI, but there is no receipt image storage integration yet.
-- Ask Aura, Load More, and View All actions are UI-only.
+- Ask Planner is UI-only.

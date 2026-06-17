@@ -6,7 +6,7 @@ import type {
 export const manualExpenseDraftMock: TransactionInfo = {
   amount: '',
   category: 'food-dining',
-  transactionDate: '2026-05-19',
+  transactionDate: '',
   note: '',
 }
 
