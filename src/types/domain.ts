@@ -35,3 +35,8 @@ export interface TransactionInfo {
   transactionDate: string
   note: string
 }
+
+export interface DashboardApiResponse {
+  currentMonthSpend: number
+  recentTransactions: TransactionInfo[]
+}

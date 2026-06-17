@@ -10,10 +10,10 @@ import { PageContainer } from "../../components/layout/PageContainer";
 import { GlassCard } from "../../components/ui/GlassCard";
 import { PrimaryFab } from "../../components/ui/PrimaryFab";
 import { TransactionList } from "../../components/transactions/TransactionList";
-import type { DashboardApiResponse } from "../../data/mock/dashboardApi";
 import { selectDashboardSummary } from "../../data/selectors/dashboardSelectors";
 import { apiEndpoints } from "../../lib/apiConfig";
 import { authenticatedFetch } from "../../lib/authenticatedFetch";
+import type { DashboardApiResponse } from "../../types/domain";
 import { formatMoney } from "../../utils/formatters";
 
 const currentMonthLabel = new Intl.DateTimeFormat("en-US", {

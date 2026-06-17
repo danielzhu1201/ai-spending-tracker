@@ -20,14 +20,9 @@ import { useLocation } from 'react-router-dom'
 import { CategoryChipGroup } from '../../components/forms/CategoryChipGroup'
 import { LabeledInput } from '../../components/forms/LabeledInput'
 import { PageContainer } from '../../components/layout/PageContainer'
-import {
-  manualExpenseCategoryOptionsMock,
-  manualExpenseDraftMock,
-  manualExpenseTipMock,
-} from '../../data/mock/futureScreens'
 import { apiEndpoints } from '../../lib/apiConfig'
 import { authenticatedFetch } from '../../lib/authenticatedFetch'
-import type { TransactionCategory, TransactionInfo } from '../../types/domain'
+import type { FilterOption, TransactionCategory, TransactionInfo } from '../../types/domain'
 
 interface ManualEntryLocationState {
   receiptTransaction?: TransactionInfo
@@ -38,9 +33,61 @@ type SaveToast = {
   severity: 'success' | 'error'
 }
 
+const defaultManualExpenseDraft: TransactionInfo = {
+  amount: '',
+  category: 'food-dining',
+  transactionDate: '',
+  note: '',
+}
+
+const manualExpenseCategoryOptions: FilterOption[] = [
+  {
+    id: 'manual-category-dining',
+    label: 'Dining',
+    value: 'food-dining',
+    icon: 'restaurant',
+    group: 'category',
+    selected: true,
+  },
+  {
+    id: 'manual-category-shopping',
+    label: 'Shopping',
+    value: 'shopping',
+    icon: 'shopping_bag',
+    group: 'category',
+  },
+  {
+    id: 'manual-category-transport',
+    label: 'Transport',
+    value: 'transport',
+    icon: 'commute',
+    group: 'category',
+  },
+  {
+    id: 'manual-category-bills',
+    label: 'Bills',
+    value: 'housing',
+    icon: 'home',
+    group: 'category',
+  },
+  {
+    id: 'manual-category-other',
+    label: 'Other',
+    value: 'other',
+    icon: 'more_horiz',
+    group: 'category',
+  },
+]
+
+const manualExpenseTip = {
+  title: 'Spending Tip',
+  message:
+    "You've stayed within your daily budget for 5 days straight. Keeping this entry under $40 will maintain your streak!",
+}
+
 function createManualExpenseDraft(initial?: TransactionInfo): TransactionInfo {
   return {
-    ...manualExpenseDraftMock,
+    ...defaultManualExpenseDraft,
     ...initial,
     transactionDate: dayjs().format('YYYY-MM-DD'),
     ...(initial?.transactionDate ? { transactionDate: initial.transactionDate } : {}),
@@ -193,7 +240,7 @@ export function ManualExpenseEntryPage() {
               CATEGORY
             </Typography>
             <CategoryChipGroup
-              options={manualExpenseCategoryOptionsMock}
+              options={manualExpenseCategoryOptions}
               selectedValue={draft.category}
               onChange={(nextCategory) => {
                 if (isSavingExpense) {
@@ -316,10 +363,10 @@ export function ManualExpenseEntryPage() {
                     fontWeight: 600,
                   }}
                 >
-                  {manualExpenseTipMock.title}
+                  {manualExpenseTip.title}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'var(--aura-on-secondary-container)' }}>
-                  {manualExpenseTipMock.message}
+                  {manualExpenseTip.message}
                 </Typography>
               </Stack>
             </Stack>

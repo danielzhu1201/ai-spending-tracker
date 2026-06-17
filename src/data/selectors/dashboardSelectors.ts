@@ -1,5 +1,5 @@
 import type { MoneyValue } from '../../types/domain'
-import type { DashboardApiResponse } from '../mock/dashboardApi'
+import type { DashboardApiResponse } from '../../types/domain'
 
 function toMoney(amount: number): MoneyValue {
   return {

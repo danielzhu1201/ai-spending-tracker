@@ -260,8 +260,7 @@ src/
   auth/             Firebase auth context and protected route wrapper
   components/       Shared layout, UI, form, icon, and transaction components
   config/           Navigation and layout configuration
-  data/mock/        Mock API response data for each screen
-  data/selectors/   View-model selectors that shape mock data for pages
+  data/selectors/   View-model selectors that shape API data for pages
   lib/              Firebase initialization and authenticated fetch helper
   pages/            Route-level screen implementations
   theme/            App design tokens, MUI theme, and CSS variables
@@ -277,7 +276,7 @@ ai-spending-tracker-backend/
 
 The visual system is centralized in `src/theme/auraTokens.ts` and `src/theme/auraTheme.ts`. `AppThemeProvider` applies the MUI theme, CSS baseline, and app CSS variables globally. Shared layout components provide the top app bar, responsive page container, desktop side navigation, and mobile bottom navigation.
 
-Most page data is still shaped through selectors before rendering. Transactions now enter the app through the backend, then flow through the same selector layer used by the earlier mock implementation.
+Page data is shaped through selectors before rendering. Transactions, dashboard totals, and insights enter the app through the backend.
 
 ## Current Limitations
 
