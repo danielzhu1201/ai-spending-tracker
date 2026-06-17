@@ -14,7 +14,6 @@ import RestaurantRoundedIcon from '@mui/icons-material/RestaurantRounded'
 import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded'
 import ShoppingBagRoundedIcon from '@mui/icons-material/ShoppingBagRounded'
 import SubscriptionsRoundedIcon from '@mui/icons-material/SubscriptionsRounded'
-import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded'
 import type { SvgIconProps } from '@mui/material/SvgIcon'
 import type { JSX } from 'react'
 
@@ -36,7 +35,6 @@ const iconMap = {
   pie_chart: PieChartRoundedIcon,
   savings: SavingsRoundedIcon,
   subscriptions: SubscriptionsRoundedIcon,
-  trending_up: TrendingUpRoundedIcon,
 } as const
 
 export function renderMaterialIcon(name: string, props?: SvgIconProps): JSX.Element {

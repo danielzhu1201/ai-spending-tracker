@@ -3,20 +3,10 @@ export interface MoneyValue {
   signed: boolean
 }
 
-export type TrendDirection = 'up' | 'down' | 'flat'
-
-export interface TrendMetric {
-  value: number
-  direction: TrendDirection
-  period: string
-  unit: 'percent' | 'amount'
-}
-
 export interface InsightCard {
   id: string
   title: string
   description: string
-  trend: TrendMetric
   icon: string
 }
 
@@ -26,6 +16,7 @@ export type TransactionCategory =
   | 'housing'
   | 'shopping'
   | 'transport'
+  | 'salary'
   | 'utilities'
   | 'other'
 
@@ -43,4 +34,9 @@ export interface TransactionInfo {
   category: TransactionCategory
   transactionDate: string
   note: string
+}
+
+export interface DashboardApiResponse {
+  currentMonthSpend: number
+  recentTransactions: TransactionInfo[]
 }

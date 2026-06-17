@@ -1,5 +1,5 @@
 import type { MoneyValue } from '../../types/domain'
-import type { DashboardApiResponse } from '../mock/dashboardApi'
+import type { DashboardApiResponse } from '../../types/domain'
 
 function toMoney(amount: number): MoneyValue {
   return {
@@ -11,5 +11,6 @@ function toMoney(amount: number): MoneyValue {
 export function selectDashboardSummary(api: DashboardApiResponse) {
   return {
     currentMonthSpend: toMoney(api.currentMonthSpend),
+    recentTransactions: api.recentTransactions,
   }
 }

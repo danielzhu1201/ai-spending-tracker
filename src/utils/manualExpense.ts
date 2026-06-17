@@ -24,6 +24,10 @@ const categoryDisplayMap: Record<
     label: 'Transport',
     icon: 'directions_car',
   },
+  salary: {
+    label: 'Salary',
+    icon: 'payments',
+  },
   utilities: {
     label: 'Utilities',
     icon: 'subscriptions',

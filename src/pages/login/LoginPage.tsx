@@ -15,6 +15,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMemo, useState, type FormEvent } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/AuthContext";
 import { LabeledInput } from "../../components/forms/LabeledInput";
@@ -23,6 +24,14 @@ import { GlassCard } from "../../components/ui/GlassCard";
 import { authService } from "../../lib/firebaseAuth";
 
 type AuthMode = "signIn" | "signUp";
+
+interface LoginLocationState {
+  from?: {
+    pathname?: string;
+    search?: string;
+    hash?: string;
+  };
+}
 
 function getAuthErrorMessage(error: unknown) {
   if (
@@ -51,6 +60,8 @@ function getAuthErrorMessage(error: unknown) {
 }
 
 export function LoginPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<AuthMode>("signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,8 +76,18 @@ export function LoginPage() {
       return "";
     }
 
-    return currentUser.displayName || currentUser.email || "Aura member";
+    return currentUser.displayName || currentUser.email || "Planner member";
   }, [currentUser]);
+
+  const redirectPath = useMemo(() => {
+    const from = (location.state as LoginLocationState | null)?.from;
+
+    if (!from?.pathname || from.pathname === "/login") {
+      return "/dashboard";
+    }
+
+    return `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`;
+  }, [location.state]);
 
   async function handleEmailAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -80,6 +101,8 @@ export function LoginPage() {
       } else {
         await authService.createAccountWithEmail(email, password);
       }
+
+      navigate(redirectPath, { replace: true });
     } catch (error) {
       setErrorMessage(getAuthErrorMessage(error));
     } finally {
@@ -94,6 +117,7 @@ export function LoginPage() {
 
     try {
       await authService.signInWithGoogle();
+      navigate(redirectPath, { replace: true });
     } catch (error) {
       setErrorMessage(getAuthErrorMessage(error));
     } finally {
@@ -374,7 +398,7 @@ export function LoginPage() {
                   }}
                 >
                   <Typography sx={{ color: "var(--aura-on-surface-variant)" }}>
-                    {isSignUp ? "Already with Aura?" : "New to Aura?"}
+                    {isSignUp ? "Already have an account?" : "New to AI Financial Planner?"}
                   </Typography>
                   <Button
                     type="button"

@@ -10,7 +10,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppTopBar title="Aura Finance" />
+        <AppTopBar title="AI Financial Planner" />
         <AppRouter />
         <MobileBottomNav items={mobileNavigationItems} />
       </AuthProvider>
